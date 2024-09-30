@@ -63,7 +63,7 @@ class Main (Scene):
         r_tracker = ValueTracker(8)
         theta_tracker = ValueTracker(0)
         dots = [ Dot(color = YELLOW).add_updater(lambda m: m.move_to(r_tracker.get_value() * (cos(theta_tracker.get_value())*RIGHT + sin(theta_tracker.get_value())*UP))), Dot(color = YELLOW).add_updater(lambda m: m.move_to( r_tracker.get_value() * (cos(theta_tracker.get_value()+PI/2)*RIGHT + sin(theta_tracker.get_value()+PI/2)*UP))), Dot(color = YELLOW).add_updater(lambda m: m.move_to(r_tracker.get_value() * (dir(theta_tracker.get_value()+PI)))), Dot(color = YELLOW).add_updater(lambda m: m.move_to(r_tracker.get_value() * dir(theta_tracker.get_value()+3*PI/2))), ]
-        # tracing_paths = [ TracedPath(dots[i].get_center, dissipating_time = 0.3, stroke_opacity = [1,1]).set_color(YELLOW) for i in range(4) ]
+        tracing_paths = [ TracedPath(dots[i].get_center, dissipating_time = 0.3, stroke_opacity = [1,1]).set_color(YELLOW) for i in range(4) ]
 
         number_of_cycles = 8
 
@@ -88,7 +88,7 @@ class Main (Scene):
         self.add_sound("./track-short.mp3")
 
         self.add(*rotating_squares)
-        # self.add(*tracing_paths)
+        self.add(*tracing_paths)
         self.wait(initial_wait)
         self.play(
             *[ transform_succession(rotating_squares[i], rotating_square_transforms[i], beat_time) for i in range(number_of_squares) ],
@@ -104,13 +104,13 @@ class Main (Scene):
         photons = [create_glow(dot, rad = photon_radius, num = photon_number, dispersion = photon_dispersion) for dot in dots]
         self.remove(*dots)
         self.remove(beat_square)
-        # self.remove(*tracing_paths)
+        self.remove(*tracing_paths)
         self.play(
             *[FadeIn(photon, scale = 2, run_time = beat_time, rate_func = rush_from) for photon in photons],
             *[Flash(dot, run_time = beat_time, rate_func = linear) for dot in dots]
         )
-        # tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = 0.2, stroke_opacity = [1,1]).set_color(YELLOW) for i in range(4) ]
-        # self.add(*tracing_paths)
+        tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = 0.2, stroke_opacity = [1,1]).set_color(YELLOW) for i in range(4) ]
+        self.add(*tracing_paths)
 
         photons[1].add_updater(lambda m: m.move_to(rotating_squares[1].height/2 * UP))
         photons[3].add_updater(lambda m: m.move_to(rotating_squares[1].height/2 * DOWN))
@@ -471,10 +471,10 @@ class Main (Scene):
                         run_time = beat_time,
                         rate_func = linear
                     ),
-                    FadeOut(Circle(radius = 0.1, color = YELLOW).set_fill(YELLOW, opacity = 0.3 if intense else 0.0), scale = 2*s/0.1, run_time = beat_time, rate_func = linear),
+                    FadeOut(Circle(radius = 0.05, color = YELLOW).set_fill(YELLOW, opacity = 0.3 if intense else 0.0), scale = 4*s/0.1, run_time = beat_time, rate_func = linear),
                     *(
                         [
-                            FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
+                            FadeOut(Circle(radius = 0.05, color = YELLOW).move_to(photons[i]), scale = 20, run_time = beat_time, rate_func = rush_from)
                             for i in range(4)
                         ]
                         if respond else []
@@ -578,3 +578,21 @@ class Main (Scene):
 
         s *= zoom_factor
         c *= zoom_factor
+
+        # Light emerges, first voyage
+
+        nucleus = create_glow(center, rad = 2.5, num = 300, dispersion = 1.0016)
+
+        self.play(
+            FadeOut(center, scale = .5),
+            FadeIn(nucleus, scale = 0.05),
+            Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2),
+            Flash(core_circle_small, color = YELLOW, num_lines = 30, flash_radius = c/2 + 0.1*c/2, line_length = 0.8*c/2),
+            Flash(core_circle_big, color = YELLOW, num_lines = 30, flash_radius = c + 0.1*(s-c), line_length = 0.8*(s-c)),
+            *[Flash(photon[0], run_time = beat_time, rate_func = rush_from) for photon in photons],
+            core_circle_small.animate.set_color(YELLOW),
+            Rotate(middle_layer, -PI/4),
+            Rotate(core_layer, PI/3),
+            run_time = beat_time,
+            rate_func = rush_from,
+        )
