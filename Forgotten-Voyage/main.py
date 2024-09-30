@@ -503,12 +503,12 @@ class Main (Scene):
 
         radiate(2)
 
-        pos = [photons[i][0].get_center() for i in range(4)]
-
+        pos = [photon[0].get_center() for photon in photons]
         self.play(
             *[
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 2, run_time = beat_time, rate_func = rush_from)
-                for i in range(4)
+                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 2, run_time = beat_time, rate_func = rush_from)
+                Flash(photon[0], run_time = beat_time, rate_func = rush_from)
+                for photon in photons
             ],
             photons[0].animate(path_arc = PI/2, run_time = 2*beat_time, rate_func = rush_from).move_to(pos[1] + 0.2*RIGHT + 0.6*UP),
             photons[1].animate(path_arc = PI/2, run_time = 2*beat_time, rate_func = rush_from).move_to(pos[2] - 0.3*RIGHT + 0.3*UP),
@@ -534,12 +534,22 @@ class Main (Scene):
 
         radiate(2)
 
+        circles = [ Circle(radius = 0.05, color = YELLOW).move_to(photons[i][0]) for i in range(len(photons)) ]
+        scales = [20,15,25,30]
+
         self.play(
             LaggedStart(
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[0]), scale = 15, run_time = beat_time, rate_func = rush_from),
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[2]), scale = 10, run_time = beat_time, rate_func = rush_from),
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[3]), scale = 20, run_time = beat_time, rate_func = rush_from),
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[1]), scale = 15, run_time = beat_time, rate_func = rush_from),
+                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[0]), scale = 15, run_time = beat_time, rate_func = rush_from),
+                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[2]), scale = 10, run_time = beat_time, rate_func = rush_from),
+                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[3]), scale = 20, run_time = beat_time, rate_func = rush_from),
+                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[1]), scale = 15, run_time = beat_time, rate_func = rush_from),
+                *[
+                    Succession(
+                        FadeIn(circles[i], scale = .5, run_time = .1*beat_time),
+                        FadeOut(circles[i], scale = scales[i], run_time = .9*beat_time, rate_func = rush_from)
+                    )
+                    for i in range(4)
+                ],
                 lag_ratio = .25
             )
         )
@@ -584,15 +594,58 @@ class Main (Scene):
         nucleus = create_glow(center, rad = 2.5, num = 300, dispersion = 1.0016)
 
         self.play(
-            FadeOut(center, scale = .5),
-            FadeIn(nucleus, scale = 0.05),
-            Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2),
-            Flash(core_circle_small, color = YELLOW, num_lines = 30, flash_radius = c/2 + 0.1*c/2, line_length = 0.8*c/2),
-            Flash(core_circle_big, color = YELLOW, num_lines = 30, flash_radius = c + 0.1*(s-c), line_length = 0.8*(s-c)),
+            FadeOut(center, scale = .5, rate_func = rush_from),
+            FadeIn(nucleus, scale = 0.05, rate_func = rush_from),
+            Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
+            Flash(core_circle_small, color = YELLOW, num_lines = 30, flash_radius = c/2 + 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
+            Flash(core_circle_big, color = YELLOW, num_lines = 30, flash_radius = c + 0.1*(s-c), line_length = 0.8*(s-c), rate_func = rush_from),
             *[Flash(photon[0], run_time = beat_time, rate_func = rush_from) for photon in photons],
             core_circle_small.animate.set_color(YELLOW),
-            Rotate(middle_layer, -PI/4),
-            Rotate(core_layer, PI/3),
+            Rotate(middle_layer, -PI/4, rate_func = linear),
+            Rotate(core_layer, PI/3, rate_func = linear),
             run_time = beat_time,
-            rate_func = rush_from,
         )
+
+        pos = [photon[0].get_center() for photon in photons ]
+
+        self.play(
+            Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
+            *[Flash(photon[0], run_time = beat_time, rate_func = rush_from) for photon in photons],
+            photons[0].animate(path_arc = PI/3, rate_func = rush_from).move_to(pos[1]),
+            photons[1].animate(path_arc = PI/3, rate_func = rush_from).move_to(pos[0]),
+            photons[2].animate(path_arc = PI/3, rate_func = rush_from).move_to(pos[3]),
+            photons[3].animate(path_arc = PI/3, rate_func = rush_from).move_to(pos[2]),
+            Rotate(middle_layer, -PI/4, rate_func = linear),
+            Rotate(core_layer, PI/3, rate_func = linear),
+            run_time = beat_time,
+        )
+
+        self.play(
+            Rotate(middle_layer, -PI/4, rate_func = linear),
+            Rotate(core_layer, PI/3, rate_func = linear),
+            *[
+                Flash(photon[0], run_time = beat_time, rate_func = rush_from)
+                for photon in photons
+            ],
+            photons[0].animate(path_arc = -2*PI/5, run_time = beat_time, rate_func = rush_from).move_to(pos[0]),
+            photons[1].animate(path_arc = -2*PI/5, run_time = beat_time, rate_func = rush_from).move_to(pos[3]),
+            photons[2].animate(path_arc = -2*PI/5, run_time = beat_time, rate_func = rush_from).move_to(pos[2]),
+            photons[3].animate(path_arc = -2*PI/5, run_time = beat_time, rate_func = rush_from).move_to(pos[1]),
+            run_time = beat_time
+        )
+
+        self.play(
+            Rotate(middle_layer, -PI/4, rate_func = linear, run_time = beat_time),
+            Rotate(core_layer, PI/3, rate_func = linear, run_time = beat_time),
+            *[
+                Flash(photon[0], run_time = beat_time, rate_func = rush_from)
+                for photon in photons
+            ],
+            photons[0].animate(path_arc = PI/2, run_time = beat_time, rate_func = rush_from).move_to(.2*RIGHT),
+            photons[1].animate(path_arc = PI/2, run_time = beat_time, rate_func = rush_from).move_to(.2*UP),
+            photons[2].animate(path_arc = PI/2, run_time = beat_time, rate_func = rush_from).move_to(.2*LEFT),
+            photons[3].animate(path_arc = PI/2, run_time = beat_time, rate_func = rush_from).move_to(.2*DOWN),
+        )
+
+        nucleus_layer = VGroup(nucleus, *photons)
+        command_group = VGroup(outer_layer, *photons)
