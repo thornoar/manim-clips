@@ -459,23 +459,33 @@ class Main (Scene):
         number_of_cycles = 2
         cur_time = number_of_cycles * beat_time
 
-        scale_factor = 1.005
-        yellow_color = False
-        def radiate ():
-            for _ in range(2):
+        def radiate (num, intense = False, respond = False, focus = False):
+            factor = 1.01 if intense else 1.005
+            for _ in range(num):
                 self.play(
                     LaggedStart(
-                        Indicate(core_layer, color = YELLOW if yellow_color else ORANGE, scale_factor = scale_factor),
-                        Indicate(middle_layer, color = YELLOW if yellow_color else square_color, scale_factor = scale_factor),
-                        Indicate(outer_layer, color = YELLOW if yellow_color else circle_color, scale_factor = scale_factor),
+                        Indicate(core_layer, color = YELLOW if intense else ORANGE, scale_factor = factor),
+                        Indicate(middle_layer, color = YELLOW if intense else square_color, scale_factor = factor),
+                        Indicate(outer_layer, color = YELLOW if intense else circle_color, scale_factor = factor),
                         lag_ratio = .2,
                         run_time = beat_time,
                         rate_func = linear
                     ),
-                    FadeOut(Circle(radius = 0.1, color = YELLOW).set_fill(YELLOW, opacity = .2 if yellow_color else 0.0), scale = 2*s/0.1, run_time = beat_time, rate_func = linear),
+                    FadeOut(Circle(radius = 0.1, color = YELLOW).set_fill(YELLOW, opacity = 0.3 if intense else 0.0), scale = 2*s/0.1, run_time = beat_time, rate_func = linear),
+                    *(
+                        [
+                            FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
+                            for i in range(4)
+                        ]
+                        if respond else []
+                    ),
+                    *(
+                        [ FocusOn(ORIGIN, run_time = beat_time/2, color = YELLOW, opacity = .1, rate_func = linear), ]
+                        if focus else []
+                    ),
                 )
 
-        radiate()
+        radiate(2)
         self.play(
             photons[0].animate(path_arc = PI/2).shift(.5*(LEFT+UP)),
             photons[1].animate(path_arc = PI/7).shift(.2*(RIGHT+UP)),
@@ -491,7 +501,7 @@ class Main (Scene):
             ]
         )
 
-        radiate()
+        radiate(2)
 
         pos = [photons[i][0].get_center() for i in range(4)]
 
@@ -506,7 +516,7 @@ class Main (Scene):
             photons[3].animate(path_arc = PI/2, run_time = 2*beat_time, rate_func = rush_from).move_to(pos[0] + 0.6*RIGHT - 0.4*UP),
         )
 
-        radiate()
+        radiate(2)
         self.play(
             photons[0].animate(path_arc = -PI/5).shift(.4*(LEFT+UP)),
             photons[1].animate(path_arc = PI/1).shift(.2*RIGHT),
@@ -522,7 +532,7 @@ class Main (Scene):
             ]
         )
 
-        radiate()
+        radiate(2)
 
         self.play(
             LaggedStart(
@@ -534,23 +544,37 @@ class Main (Scene):
             )
         )
 
-        scale_factor = 1.01
-        yellow_color = True
+        radiate(3, intense = True)
+        radiate(1, intense = True, respond = True)
+        radiate(3, intense = True)
+        radiate(1, intense = True, respond = True)
+        radiate(2, intense = True)
+        radiate(1, intense = True, respond = False, focus = True)
+        self.play(
+            *[
+                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
+                for i in range(4)
+            ]
+        )
+        
+        cur_time = 4*beat_time
 
-        radiate()
-        radiate()
-        radiate()
-        radiate()
-        radiate()
+        zoom_factor = 1.2
         self.play(
             LaggedStart(
-                Indicate(core_layer, color = YELLOW, scale_factor = scale_factor),
-                Indicate(middle_layer, color = YELLOW, scale_factor = scale_factor),
-                Indicate(outer_layer, color = YELLOW, scale_factor = scale_factor),
-                lag_ratio = .2,
-                run_time = beat_time,
-                rate_func = linear
+                *[
+                    FocusOn(ORIGIN, run_time = beat_time, color = YELLOW, opacity = .1, rate_func = rush_from)
+                    for _ in range(7)
+                ],
+                lag_ratio = .5,
+                run_time = cur_time
             ),
-            FocusOn(ORIGIN, run_time = beat_time/2, color = YELLOW, opacity = .1, rate_func = linear),
-            FadeOut(Circle(radius = 0.1, color = YELLOW), scale = 2*s/0.1, run_time = beat_time, rate_func = linear),
+            lightship.animate(run_time = cur_time, rate_func = linear, rate_func = linear).scale(zoom_factor),
+            photons[0].animate(path_arc = PI/3, run_time = cur_time, rate_func = linear).shift(.1*(LEFT+UP)),
+            photons[1].animate(path_arc = -PI/2, run_time = cur_time, rate_func = linear).shift(1.2*LEFT+.2*DOWN),
+            photons[2].animate(path_arc = 3*PI/4, run_time = cur_time, rate_func = linear).shift(.2*RIGHT + .5*UP),
+            photons[3].animate(path_arc = PI/4, run_time = cur_time, rate_func = linear).shift(.9*LEFT+.1*DOWN),
         )
+
+        s *= zoom_factor
+        c *= zoom_factor
