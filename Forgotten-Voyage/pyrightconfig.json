@@ -1,0 +1,9 @@
+{
+    "include": [
+        "./logo"
+    ],
+    "typeCheckingMode": "basic",
+    "reportArgumentType": "warning",
+    "reportCallIssue": "warning",
+    "reportWildcardImportFromLibrary": "none"
+}
