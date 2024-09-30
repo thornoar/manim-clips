@@ -569,11 +569,11 @@ class Main (Scene):
                 lag_ratio = .5,
                 run_time = cur_time
             ),
-            lightship.animate(run_time = cur_time, rate_func = linear, rate_func = linear).scale(zoom_factor),
+            lightship.animate(run_time = cur_time, rate_func = rush_into).scale(zoom_factor),
             photons[0].animate(path_arc = PI/3, run_time = cur_time, rate_func = linear).shift(.1*(LEFT+UP)),
             photons[1].animate(path_arc = -PI/2, run_time = cur_time, rate_func = linear).shift(1.2*LEFT+.2*DOWN),
             photons[2].animate(path_arc = 3*PI/4, run_time = cur_time, rate_func = linear).shift(.2*RIGHT + .5*UP),
-            photons[3].animate(path_arc = PI/4, run_time = cur_time, rate_func = linear).shift(.9*LEFT+.1*DOWN),
+            photons[3].animate(path_arc = PI/4, run_time = cur_time, rate_func = linear).shift(.9*RIGHT+.3*DOWN),
         )
 
         s *= zoom_factor
