@@ -43,7 +43,7 @@ def move (group, start, end, *args, **kwargs):
 def polygon_center(p):
     return sum(p.get_vertices())/len(p.get_vertices())
 
-class Main (Scene):
+class Main (MovingCameraScene):
     def construct(self):
         initial_wait = 0.140
         beat_time = 0.515
@@ -649,3 +649,67 @@ class Main (Scene):
 
         nucleus_layer = VGroup(nucleus, *photons)
         command_group = VGroup(outer_layer, *photons)
+
+        self.play(
+            Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
+            Rotate(core_layer, PI/3, rate_func = linear, run_time = beat_time),
+            Rotate(middle_layer, -PI/4, rate_func = linear, run_time = beat_time),
+            Rotate(command_group, PI, about_point = ORIGIN, rate_func = linear),
+            run_time = beat_time
+        )
+
+        core_group = core_layer
+        core_group.add(nucleus)
+        middle_group = middle_layer
+
+        r_tracker_main = ValueTracker(0)
+        theta_tracker_main = ValueTracker(PI)
+        r_tracker_lag = ValueTracker(0)
+        theta_tracker_lag = ValueTracker(PI)
+        alpha_tracker = ValueTracker(0)
+
+        def update_core (m):
+            m.restore()
+            return m.rotate(alpha_tracker.get_value()/3, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value()))
+
+        def update_middle (m):
+            m.restore()
+            return m.rotate(-alpha_tracker.get_value()/4, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value()))
+
+        def update_command (m):
+            m.restore()
+            return m.rotate(alpha_tracker.get_value(), about_point = ORIGIN).shift(r_tracker_lag.get_value()*dir(theta_tracker_lag.get_value()))
+
+        core_group.save_state()
+        core_group.add_updater(update_core)
+        middle_group.save_state()
+        middle_group.add_updater(update_middle)
+        command_group.save_state()
+        command_group.add_updater(update_command)
+
+        def move_lightship (r_new, theta_new, lag, run_time, rate_func):
+            return AnimationGroup(
+                alpha_tracker.animate(run_time = run_time, rate_func = linear).set_value(PI/beat_time*run_time),
+                LaggedStart(
+                    AnimationGroup(
+                        r_tracker_main.animate.set_value(r_new),
+                        theta_tracker_main.animate.set_value(theta_new),
+                    ),
+                    AnimationGroup(
+                        r_tracker_lag.animate.set_value(r_new),
+                        theta_tracker_lag.animate.set_value(theta_new),
+                    ),
+                    lag_ratio = lag,
+                    run_time = run_time,
+                    rate_func = rate_func
+                )
+            )
+
+        self.play(
+            move_lightship(1.2, 1.05*PI, 0.01, beat_time, rush_from)
+        )
+        self.play(
+            move_lightship(1.3, 1.9*PI, 0.01, 3*beat_time, rush_from)
+        )
+
+        self.wait(1)
