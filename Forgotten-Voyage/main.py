@@ -708,10 +708,10 @@ class Main (MovingCameraScene):
             ]
 
         self.play(
-            *move_lightship(1.2, 1.05*PI, 0.0, run_time = 2*beat_time, rate_func = smooth)
+            *move_lightship(1.2, 1.05*PI, 0.0, run_time = beat_time, rate_func = smooth)
         )
         self.play(
-            *move_lightship(1.3, 1.5*PI, 0.0, run_time = 3*beat_time, rate_func = smooth)
+            *move_lightship(1.3, 1.5*PI, 0.0, run_time = 2*beat_time, rate_func = smooth)
         )
 
         self.wait(1)
