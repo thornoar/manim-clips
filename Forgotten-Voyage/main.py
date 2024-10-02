@@ -652,8 +652,10 @@ class Main (MovingCameraScene):
 
         self.play(
             Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
-            Rotate(core_layer, PI/3, rate_func = linear, run_time = beat_time),
-            Rotate(middle_layer, -PI/4, rate_func = linear, run_time = beat_time),
+            Flash(core_circle_small, color = YELLOW, num_lines = 30, flash_radius = c/2 + 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
+            Flash(core_circle_big, color = YELLOW, num_lines = 30, flash_radius = c + 0.1*(s-c), line_length = 0.8*(s-c), rate_func = rush_from),
+            Rotate(core_layer, PI/3, rate_func = linear),
+            Rotate(middle_layer, -PI/4, rate_func = linear),
             Rotate(command_group, PI, about_point = ORIGIN, rate_func = linear),
             run_time = beat_time
         )
@@ -688,8 +690,8 @@ class Main (MovingCameraScene):
         command_group.add_updater(update_command)
 
         def move_lightship (r_new, theta_new, lag, run_time, rate_func):
-            return AnimationGroup(
-                alpha_tracker.animate(run_time = run_time, rate_func = linear).set_value(PI/beat_time*run_time),
+            return [
+                alpha_tracker.animate(run_time = run_time, rate_func = linear).increment_value(PI*run_time/beat_time),
                 LaggedStart(
                     AnimationGroup(
                         r_tracker_main.animate.set_value(r_new),
@@ -703,13 +705,13 @@ class Main (MovingCameraScene):
                     run_time = run_time,
                     rate_func = rate_func
                 )
-            )
+            ]
 
         self.play(
-            move_lightship(1.2, 1.05*PI, 0.01, beat_time, rush_from)
+            *move_lightship(1.2, 1.05*PI, 0.0, run_time = 2*beat_time, rate_func = smooth)
         )
         self.play(
-            move_lightship(1.3, 1.9*PI, 0.01, 3*beat_time, rush_from)
+            *move_lightship(1.3, 1.5*PI, 0.0, run_time = 3*beat_time, rate_func = smooth)
         )
 
         self.wait(1)
