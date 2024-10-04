@@ -647,17 +647,20 @@ class Main (MovingCameraScene):
             photons[3].animate(path_arc = PI/2, run_time = beat_time, rate_func = rush_from).move_to(.2*DOWN),
         )
 
-        nucleus_layer = VGroup(nucleus, *photons)
+        # nucleus_layer = VGroup(nucleus, *photons)
         command_group = VGroup(outer_layer, *photons)
+        # command_group.rotate(2*PI, about_point = ORIGIN)
+
+        cur_time = 1.5*beat_time
 
         self.play(
             Flash(ORIGIN, color = YELLOW, num_lines = 30, flash_radius = 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
             Flash(core_circle_small, color = YELLOW, num_lines = 30, flash_radius = c/2 + 0.1*c/2, line_length = 0.8*c/2, rate_func = rush_from),
             Flash(core_circle_big, color = YELLOW, num_lines = 30, flash_radius = c + 0.1*(s-c), line_length = 0.8*(s-c), rate_func = rush_from),
-            Rotate(core_layer, PI/3, rate_func = linear),
-            Rotate(middle_layer, -PI/4, rate_func = linear),
-            Rotate(command_group, PI, about_point = ORIGIN, rate_func = linear),
-            run_time = beat_time
+            Rotate(core_layer, cur_time/beat_time*PI/3, rate_func = linear),
+            Rotate(middle_layer, -cur_time/beat_time*PI/4, rate_func = linear),
+            Rotate(command_group, cur_time/beat_time*PI, about_point = ORIGIN, rate_func = linear),
+            run_time = cur_time
         )
 
         core_group = core_layer
@@ -665,22 +668,26 @@ class Main (MovingCameraScene):
         middle_group = middle_layer
 
         r_tracker_main = ValueTracker(0)
-        theta_tracker_main = ValueTracker(PI)
+        theta_tracker_main = ValueTracker(PI/2)
         r_tracker_lag = ValueTracker(0)
-        theta_tracker_lag = ValueTracker(PI)
+        theta_tracker_lag = ValueTracker(PI/2)
+        x_tracker_main = ValueTracker(0)
+        y_tracker_main = ValueTracker(0)
+        x_tracker_lag = ValueTracker(0)
+        y_tracker_lag = ValueTracker(0)
         alpha_tracker = ValueTracker(0)
 
         def update_core (m):
             m.restore()
-            return m.rotate(alpha_tracker.get_value()/3, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value()))
+            return m.rotate(alpha_tracker.get_value()/3, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value())).shift(x_tracker_main.get_value()*RIGHT + y_tracker_main.get_value()*UP)
 
         def update_middle (m):
             m.restore()
-            return m.rotate(-alpha_tracker.get_value()/4, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value()))
+            return m.rotate(-alpha_tracker.get_value()/4, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value())).shift(x_tracker_main.get_value()*RIGHT + y_tracker_main.get_value()*UP)
 
         def update_command (m):
             m.restore()
-            return m.rotate(alpha_tracker.get_value(), about_point = ORIGIN).shift(r_tracker_lag.get_value()*dir(theta_tracker_lag.get_value()))
+            return m.rotate(alpha_tracker.get_value(), about_point = ORIGIN).shift(r_tracker_lag.get_value()*dir(theta_tracker_lag.get_value())).shift(x_tracker_lag.get_value()*RIGHT + y_tracker_lag.get_value()*UP)
 
         core_group.save_state()
         core_group.add_updater(update_core)
@@ -689,29 +696,50 @@ class Main (MovingCameraScene):
         command_group.save_state()
         command_group.add_updater(update_command)
 
-        def move_lightship (r_new, theta_new, lag, run_time, rate_func):
+        def move_lightship (r_delta = 0.0, theta_delta = 0.0, x_delta = 0.0, y_delta = 0.0, run_time = beat_time, r_rate_func = smooth, theta_rate_func = smooth, x_rate_func = smooth, y_rate_func = smooth, move_camera = True, frame_rate_func = linear, lag = 0.0):
+            r_new  = r_tracker_main.get_value() + r_delta
+            theta_new  = theta_tracker_main.get_value() + theta_delta
+            x_new = x_tracker_main.get_value() + x_delta
+            y_new = y_tracker_main.get_value() + y_delta
             return [
                 alpha_tracker.animate(run_time = run_time, rate_func = linear).increment_value(PI*run_time/beat_time),
                 LaggedStart(
                     AnimationGroup(
-                        r_tracker_main.animate.set_value(r_new),
-                        theta_tracker_main.animate.set_value(theta_new),
+                        r_tracker_main.animate(rate_func = r_rate_func).increment_value(r_delta),
+                        theta_tracker_main.animate(rate_func = theta_rate_func).increment_value(theta_delta),
+                        x_tracker_main.animate(rate_func = x_rate_func).increment_value(x_delta),
+                        y_tracker_main.animate(rate_func = y_rate_func).increment_value(y_delta),
                     ),
                     AnimationGroup(
-                        r_tracker_lag.animate.set_value(r_new),
-                        theta_tracker_lag.animate.set_value(theta_new),
+                        r_tracker_lag.animate(rate_func = r_rate_func).increment_value(r_delta),
+                        theta_tracker_lag.animate(rate_func = theta_rate_func).increment_value(theta_delta),
+                        x_tracker_lag.animate(rate_func = x_rate_func).increment_value(x_delta),
+                        y_tracker_lag.animate(rate_func = y_rate_func).increment_value(y_delta),
                     ),
+                    *([
+                        self.camera.frame.animate(run_time = run_time, rate_func = frame_rate_func).move_to(r_new*dir(theta_new) + x_new*RIGHT + y_new*UP) # pyright: ignore[reportAttributeAccessIssue]
+                    ] if move_camera else []),
                     lag_ratio = lag,
-                    run_time = run_time,
-                    rate_func = rate_func
+                    run_time = run_time
                 )
             ]
 
         self.play(
-            *move_lightship(1.2, 1.05*PI, 0.0, run_time = beat_time, rate_func = smooth)
+            *move_lightship(r_delta = 1.4, theta_delta = 3*PI/2, run_time = 3*beat_time, r_rate_func = rush_from, theta_rate_func = rush_from, move_camera = False),
+        )
+
+        # self.play(
+        #     *move_lightship(x_delta = -1.4, y_delta = 3.5, run_time = 3*beat_time, x_rate_func = linear, y_rate_func = linear),
+        # )
+        self.play(
+            *move_lightship(x_delta = 3.4, y_delta = 4.5, run_time = 2.5*beat_time, x_rate_func = linear, y_rate_func = linear, frame_rate_func = linear),
         )
         self.play(
-            *move_lightship(1.3, 1.5*PI, 0.0, run_time = 2*beat_time, rate_func = smooth)
+            # *move_lightship(x_delta = -3.4, y_delta = 4.5, run_time = 2*beat_time, x_rate_func = linear, y_rate_func = linear),
+            *move_lightship(r_delta = -3.4, theta_delta = PI/3, run_time = 2*beat_time, r_rate_func = linear, theta_rate_func = linear),
+        )
+        self.play(
+            *move_lightship(x_delta = 3.4, y_delta = 4.5, run_time = 2*beat_time, x_rate_func = linear, y_rate_func = linear),
         )
 
         self.wait(1)
