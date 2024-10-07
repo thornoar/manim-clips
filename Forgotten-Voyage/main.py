@@ -702,6 +702,9 @@ class Main (MovingCameraScene):
             x_new = x_tracker_main.get_value() + x_delta
             y_new = y_tracker_main.get_value() + y_delta
             return [
+                *([
+                    self.camera.frame.animate(run_time = run_time, rate_func = frame_rate_func).move_to(r_new*dir(theta_new) + x_new*RIGHT + y_new*UP) # pyright: ignore[reportAttributeAccessIssue]
+                ] if move_camera else []),
                 alpha_tracker.animate(run_time = run_time, rate_func = linear).increment_value(PI*run_time/beat_time),
                 LaggedStart(
                     AnimationGroup(
@@ -716,30 +719,55 @@ class Main (MovingCameraScene):
                         x_tracker_lag.animate(rate_func = x_rate_func).increment_value(x_delta),
                         y_tracker_lag.animate(rate_func = y_rate_func).increment_value(y_delta),
                     ),
-                    *([
-                        self.camera.frame.animate(run_time = run_time, rate_func = frame_rate_func).move_to(r_new*dir(theta_new) + x_new*RIGHT + y_new*UP) # pyright: ignore[reportAttributeAccessIssue]
-                    ] if move_camera else []),
                     lag_ratio = lag,
                     run_time = run_time
                 )
             ]
 
         self.play(
-            *move_lightship(r_delta = 1.4, theta_delta = 3*PI/2, run_time = 3*beat_time, r_rate_func = rush_from, theta_rate_func = rush_from, move_camera = False),
+            *move_lightship(r_delta = 1.4, theta_delta = 3*PI/2, run_time = 2.8*beat_time, r_rate_func = rush_from, theta_rate_func = rush_from, move_camera = True),
         )
 
         # self.play(
         #     *move_lightship(x_delta = -1.4, y_delta = 3.5, run_time = 3*beat_time, x_rate_func = linear, y_rate_func = linear),
         # )
+
+        vec = 5*dir(theta_tracker_main.get_value()+PI/2)
         self.play(
-            *move_lightship(x_delta = 3.4, y_delta = 4.5, run_time = 2.5*beat_time, x_rate_func = linear, y_rate_func = linear, frame_rate_func = linear),
+            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1.1*beat_time, x_rate_func = linear, y_rate_func = linear, frame_rate_func = rush_into),
         )
         self.play(
             # *move_lightship(x_delta = -3.4, y_delta = 4.5, run_time = 2*beat_time, x_rate_func = linear, y_rate_func = linear),
-            *move_lightship(r_delta = -3.4, theta_delta = PI/3, run_time = 2*beat_time, r_rate_func = linear, theta_rate_func = linear),
+            *move_lightship(r_delta = 0.0, theta_delta = PI/3, run_time = 1.1*beat_time, r_rate_func = linear, theta_rate_func = linear, frame_rate_func = rush_into),
+        )
+        vec = 5*dir(theta_tracker_main.get_value()+PI/2)
+        self.play(
+            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, frame_rate_func = rush_into),
         )
         self.play(
-            *move_lightship(x_delta = 3.4, y_delta = 4.5, run_time = 2*beat_time, x_rate_func = linear, y_rate_func = linear),
+            *move_lightship(r_delta = 0.0, theta_delta = PI/3, run_time = 1*beat_time, r_rate_func = linear, theta_rate_func = linear, frame_rate_func = rush_into),
         )
+        vec = 10*dir(theta_tracker_main.get_value()+PI/2)
+        self.play(
+            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
+            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5:wqa
+                                                                                      *RIGHT).scale(1.5), # pyright: ignore[reportAttributeAccessIssue]
+        )
+        self.play(
+            *move_lightship(x_delta = -3.4, y_delta = 9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
+            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5*RIGHT).scale(1.5), # pyright: ignore[reportAttributeAccessIssue]
+        )
+        self.play(
+            *move_lightship(x_delta = -3.4, y_delta = -9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
+            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5*RIGHT).scale(1.5), # pyright: ignore[reportAttributeAccessIssue]
+        )
+        # self.play(
+        #     Succession(
+        #         AnimationGroup(*move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False)),
+        #         AnimationGroup(*move_lightship(x_delta = -3.4, y_delta = 9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False)),
+        #         AnimationGroup(*move_lightship(x_delta = -3.4, y_delta = -9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False)),
+        #     ),
+        #     self.camera.frame.animate(rate_func = rush_from, run_time = 3*beat_time).shift(-6*LEFT).scale(6), # pyright: ignore[reportAttributeAccessIssue]
+        # )
 
         self.wait(1)
