@@ -1,5 +1,8 @@
 from manim import *
 from math import sqrt, cos, sin
+from manim.utils.color.X11 import *
+
+from numpy import random
 
 def delayed_animation (anim, delay_time: float):
     tracker = ValueTracker(0)
@@ -9,12 +12,12 @@ def delayed_animation (anim, delay_time: float):
         # lag_ratio = 1
     )
 
-def create_glow(vmobject, rad = 1.0, col = YELLOW, num = 100, dispersion = 1.002):
+def create_glow(vmobject, rad = 1.0, col = YELLOW_C, num = 100, dispersion = 1.002):
     glow_group = VGroup()
     for i in range(num):
         new_circle = Circle(radius = rad*(dispersion**(i**2))/50, stroke_opacity = 0, fill_color = col, fill_opacity = 0.2-i/300).move_to(vmobject)
         glow_group.add(new_circle)
-    return glow_group 
+    return glow_group
 
 def transform_succession(mobject, mobjects, unit_time, rate_func = (lambda _: rush_from)):
     return Succession(*[
@@ -44,7 +47,7 @@ def polygon_center(p):
     return sum(p.get_vertices())/len(p.get_vertices())
 
 class Main (MovingCameraScene):
-    def construct(self):
+    def part_one (self):
         initial_wait = 0.140
         beat_time = 0.515
         photon_lag_ratio = 0.001
@@ -62,8 +65,8 @@ class Main (MovingCameraScene):
 
         r_tracker = ValueTracker(8)
         theta_tracker = ValueTracker(0)
-        dots = [ Dot(color = YELLOW).add_updater(lambda m: m.move_to(r_tracker.get_value() * (cos(theta_tracker.get_value())*RIGHT + sin(theta_tracker.get_value())*UP))), Dot(color = YELLOW).add_updater(lambda m: m.move_to( r_tracker.get_value() * (cos(theta_tracker.get_value()+PI/2)*RIGHT + sin(theta_tracker.get_value()+PI/2)*UP))), Dot(color = YELLOW).add_updater(lambda m: m.move_to(r_tracker.get_value() * (dir(theta_tracker.get_value()+PI)))), Dot(color = YELLOW).add_updater(lambda m: m.move_to(r_tracker.get_value() * dir(theta_tracker.get_value()+3*PI/2))), ]
-        tracing_paths = [ TracedPath(dots[i].get_center, dissipating_time = 0.3, stroke_opacity = [1,1]).set_color(YELLOW) for i in range(4) ]
+        dots = [ Dot(color = YELLOW_C).add_updater(lambda m: m.move_to(r_tracker.get_value() * (cos(theta_tracker.get_value())*RIGHT + sin(theta_tracker.get_value())*UP))), Dot(color = YELLOW_C).add_updater(lambda m: m.move_to( r_tracker.get_value() * (cos(theta_tracker.get_value()+PI/2)*RIGHT + sin(theta_tracker.get_value()+PI/2)*UP))), Dot(color = YELLOW_C).add_updater(lambda m: m.move_to(r_tracker.get_value() * (dir(theta_tracker.get_value()+PI)))), Dot(color = YELLOW_C).add_updater(lambda m: m.move_to(r_tracker.get_value() * dir(theta_tracker.get_value()+3*PI/2))), ]
+        tracing_paths = [ TracedPath(dots[i].get_center, dissipating_time = 0.3, stroke_opacity = [1,1]).set_color(YELLOW_C) for i in range(4) ]
 
         number_of_cycles = 8
 
@@ -84,11 +87,11 @@ class Main (MovingCameraScene):
         # The approah of the photons
 
         self.add(*dots)
+        self.add(*rotating_squares)
+        self.add(*tracing_paths)
 
         self.add_sound("./track-short.mp3")
 
-        self.add(*rotating_squares)
-        self.add(*tracing_paths)
         self.wait(initial_wait)
         self.play(
             *[ transform_succession(rotating_squares[i], rotating_square_transforms[i], beat_time) for i in range(number_of_squares) ],
@@ -101,7 +104,7 @@ class Main (MovingCameraScene):
 
         square_color = colors[number_of_cycles-1]
         circle_color = BLUE
-        photons = [create_glow(dot, rad = photon_radius, num = photon_number, dispersion = photon_dispersion) for dot in dots]
+        photons = [create_glow(dot, rad = photon_radius, num = photon_number, dispersion = photon_dispersion, col = YELLOW_C) for dot in dots]
         self.remove(*dots)
         self.remove(beat_square)
         self.remove(*tracing_paths)
@@ -109,7 +112,7 @@ class Main (MovingCameraScene):
             *[FadeIn(photon, scale = 2, run_time = beat_time, rate_func = rush_from) for photon in photons],
             *[Flash(dot, run_time = beat_time, rate_func = linear) for dot in dots]
         )
-        tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = 0.2, stroke_opacity = [1,1]).set_color(YELLOW) for i in range(4) ]
+        tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = beat_time/2, stroke_opacity = [1,1]).set_color(YELLOW_C) for i in range(4) ]
         self.add(*tracing_paths)
 
         photons[1].add_updater(lambda m: m.move_to(rotating_squares[1].height/2 * UP))
@@ -170,15 +173,15 @@ class Main (MovingCameraScene):
         cur_time = number_of_cycles*beat_time
 
         circles_inner = [
-            Circle(radius = .15, color = YELLOW).move_to(s*dir(-PI/4+i*2*PI/number_of_cycles))
+            Circle(radius = .15, color = YELLOW_C).move_to(s*dir(-PI/4+i*2*PI/number_of_cycles))
             for i in range(number_of_cycles)
         ]
         circles_middle = [
-            Circle(radius = .15, color = YELLOW).move_to(s*sqrt(2)*dir(PI-PI/4+i*2*PI/number_of_cycles))
+            Circle(radius = .15, color = YELLOW_C).move_to(s*sqrt(2)*dir(PI-PI/4+i*2*PI/number_of_cycles))
             for i in range(number_of_cycles)
         ]
         circles_middle1 = [
-            Circle(radius = .15, color = YELLOW).move_to(s*sqrt(2)*dir(i*2*PI/number_of_cycles))
+            Circle(radius = .15, color = YELLOW_C).move_to(s*sqrt(2)*dir(i*2*PI/number_of_cycles))
             for i in range(number_of_cycles)
         ]
 
@@ -200,7 +203,7 @@ class Main (MovingCameraScene):
         cur_time = number_of_cycles*beat_time
 
         circles_inner = [
-            Circle(radius = .15, color = YELLOW).move_to(s/sqrt(2)*dir(PI - PI/4 - i*PI/2))
+            Circle(radius = .15, color = YELLOW_C).move_to(s/sqrt(2)*dir(PI - PI/4 - i*PI/2))
             for i in range(4)
         ]
 
@@ -301,8 +304,8 @@ class Main (MovingCameraScene):
         line1 = Line(start = photons[1][0].get_center(), end = photons[2][0].get_center(), color = YELLOW, z_index = -0.5)
         line2 = Line(start = photons[2][0].get_center(), end = photons[3][0].get_center(), color = YELLOW, z_index = -0.5)
         line3 = Line(start = photons[3][0].get_center(), end = photons[1][0].get_center(), color = YELLOW, z_index = -0.5)
-        circles = [Circle(radius = .01, color = YELLOW) for _ in range(4)]
-        circle = Circle(radius = .01, color = YELLOW)
+        circles = [Circle(radius = .01, color = YELLOW_C) for _ in range(4)]
+        circle = Circle(radius = .01, color = YELLOW_C)
 
         self.play(
             Create(line1, run_time = cur_time, rate_func = linear),
@@ -383,8 +386,8 @@ class Main (MovingCameraScene):
         core_circle_big_copy = core_circle_big.copy()
         core_circle_small_copy = core_circle_small.copy()
 
-        circles_inner = [Circle(radius = 0.15, color = YELLOW).move_to(c/2*dir(PI/6+i*2*PI/3)) for i in range(3)]
-        circles_outer = [Circle(radius = 0.15, color = YELLOW).move_to(c*dir(PI/6+PI+i*2*PI/3)) for i in range(3)]
+        circles_inner = [Circle(radius = 0.15, color = YELLOW_C).move_to(c/2*dir(PI/6+i*2*PI/3)) for i in range(3)]
+        circles_outer = [Circle(radius = 0.15, color = YELLOW_C).move_to(c*dir(PI/6+PI+i*2*PI/3)) for i in range(3)]
 
         self.play(
             Create(core_circle_big, run_time = cur_time, rate_func = linear),
@@ -403,12 +406,6 @@ class Main (MovingCameraScene):
 
         core_circle_big_copy.set_color(ORANGE)
         core_circle_small_copy.set_color(ORANGE)
-
-        # self.play(
-        #     move(photons[2], c/2*dir(PI/6), c*dir(PI/6), run_time = beat_time, rate_func = rush_into),
-        #     move(photons[3], c*dir(PI/6+PI), c/2*dir(PI/6+PI), run_time = beat_time, rate_func = rush_into),
-        #     Succession(FadeIn(circle, run_time = .1*beat_time), FadeOut(circle, scale = 70, run_time = .9*beat_time, rate_func = rush_from)),
-        # )
 
         number_of_cycles = 3
         cur_time = number_of_cycles * beat_time
@@ -474,7 +471,7 @@ class Main (MovingCameraScene):
                     FadeOut(Circle(radius = 0.05, color = YELLOW).set_fill(YELLOW, opacity = 0.3 if intense else 0.0), scale = 4*s/0.1, run_time = beat_time, rate_func = linear),
                     *(
                         [
-                            FadeOut(Circle(radius = 0.05, color = YELLOW).move_to(photons[i]), scale = 20, run_time = beat_time, rate_func = rush_from)
+                            FadeOut(Circle(radius = 0.05, color = YELLOW_C).move_to(photons[i]), scale = 20, run_time = beat_time, rate_func = rush_from)
                             for i in range(4)
                         ]
                         if respond else []
@@ -496,7 +493,7 @@ class Main (MovingCameraScene):
         )
         self.play(
             *[
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
+                FadeOut(Circle(radius = 0.1, color = YELLOW_C).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
                 for i in range(4)
             ]
         )
@@ -506,7 +503,7 @@ class Main (MovingCameraScene):
         pos = [photon[0].get_center() for photon in photons]
         self.play(
             *[
-                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 2, run_time = beat_time, rate_func = rush_from)
+                # FadeOut(Circle(radius = 0.1, color = YELLOW_C).move_to(photons[i]), scale = 2, run_time = beat_time, rate_func = rush_from)
                 Flash(photon[0], run_time = beat_time, rate_func = rush_from)
                 for photon in photons
             ],
@@ -527,28 +524,24 @@ class Main (MovingCameraScene):
         )
         self.play(
             *[
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
+                FadeOut(Circle(radius = 0.1, color = YELLOW_C).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
                 for i in range(4)
             ]
         )
 
         radiate(2)
 
-        circles = [ Circle(radius = 0.05, color = YELLOW).move_to(photons[i][0]) for i in range(len(photons)) ]
+        circles = [ Circle(radius = 0.05, color = YELLOW_C).move_to(photons[i][0]) for i in range(len(photons)) ]
         scales = [20,15,25,30]
 
         self.play(
             LaggedStart(
-                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[0]), scale = 15, run_time = beat_time, rate_func = rush_from),
-                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[2]), scale = 10, run_time = beat_time, rate_func = rush_from),
-                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[3]), scale = 20, run_time = beat_time, rate_func = rush_from),
-                # FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[1]), scale = 15, run_time = beat_time, rate_func = rush_from),
                 *[
                     Succession(
                         FadeIn(circles[i], scale = .5, run_time = .1*beat_time),
                         FadeOut(circles[i], scale = scales[i], run_time = .9*beat_time, rate_func = rush_from)
                     )
-                    for i in range(4)
+                    for i in [0,2,1,3]
                 ],
                 lag_ratio = .25
             )
@@ -562,7 +555,7 @@ class Main (MovingCameraScene):
         radiate(1, intense = True, respond = False, focus = True)
         self.play(
             *[
-                FadeOut(Circle(radius = 0.1, color = YELLOW).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
+                FadeOut(Circle(radius = 0.1, color = YELLOW_C).move_to(photons[i]), scale = 10, run_time = beat_time, rate_func = rush_from)
                 for i in range(4)
             ]
         )
@@ -651,6 +644,10 @@ class Main (MovingCameraScene):
         command_group = VGroup(outer_layer, *photons)
         # command_group.rotate(2*PI, about_point = ORIGIN)
 
+        self.remove(*tracing_paths)
+        tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = 2*beat_time, stroke_opacity = [1,1]).set_color(YELLOW_C) for i in range(4) ]
+        self.add(*tracing_paths)
+
         cur_time = 1.5*beat_time
 
         self.play(
@@ -664,9 +661,11 @@ class Main (MovingCameraScene):
         )
 
         core_group = core_layer
-        core_group.add(nucleus)
+        nucleus_group = VGroup(nucleus)
+        # core_group.add(nucleus)
         middle_group = middle_layer
 
+        nucleus_scale_tracker = ValueTracker(1)
         r_tracker_main = ValueTracker(0)
         theta_tracker_main = ValueTracker(PI/2)
         r_tracker_lag = ValueTracker(0)
@@ -676,6 +675,12 @@ class Main (MovingCameraScene):
         x_tracker_lag = ValueTracker(0)
         y_tracker_lag = ValueTracker(0)
         alpha_tracker = ValueTracker(0)
+        middle_scale_tracher = ValueTracker(1.0)
+        command_scale_tracher = ValueTracker(1.0)
+
+        def update_nucleus (m):
+            m.restore()
+            return m.scale(nucleus_scale_tracker.get_value()).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value())).shift(x_tracker_main.get_value()*RIGHT + y_tracker_main.get_value()*UP)
 
         def update_core (m):
             m.restore()
@@ -683,12 +688,14 @@ class Main (MovingCameraScene):
 
         def update_middle (m):
             m.restore()
-            return m.rotate(-alpha_tracker.get_value()/4, about_point = ORIGIN).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value())).shift(x_tracker_main.get_value()*RIGHT + y_tracker_main.get_value()*UP)
+            return m.rotate(-alpha_tracker.get_value()/4, about_point = ORIGIN).scale(middle_scale_tracher.get_value()).shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value())).shift(x_tracker_main.get_value()*RIGHT + y_tracker_main.get_value()*UP)
 
         def update_command (m):
             m.restore()
-            return m.rotate(alpha_tracker.get_value(), about_point = ORIGIN).shift(r_tracker_lag.get_value()*dir(theta_tracker_lag.get_value())).shift(x_tracker_lag.get_value()*RIGHT + y_tracker_lag.get_value()*UP)
+            return m.rotate(alpha_tracker.get_value(), about_point = ORIGIN).scale(command_scale_tracher.get_value()).shift(r_tracker_lag.get_value()*dir(theta_tracker_lag.get_value())).shift(x_tracker_lag.get_value()*RIGHT + y_tracker_lag.get_value()*UP)
 
+        nucleus.save_state()
+        nucleus.add_updater(update_nucleus)
         core_group.save_state()
         core_group.add_updater(update_core)
         middle_group.save_state()
@@ -696,17 +703,19 @@ class Main (MovingCameraScene):
         command_group.save_state()
         command_group.add_updater(update_command)
 
-        def move_lightship (r_delta = 0.0, theta_delta = 0.0, x_delta = 0.0, y_delta = 0.0, run_time = beat_time, r_rate_func = smooth, theta_rate_func = smooth, x_rate_func = smooth, y_rate_func = smooth, move_camera = True, frame_rate_func = linear, lag = 0.0):
-            r_new  = r_tracker_main.get_value() + r_delta
-            theta_new  = theta_tracker_main.get_value() + theta_delta
-            x_new = x_tracker_main.get_value() + x_delta
-            y_new = y_tracker_main.get_value() + y_delta
+        alpha_rate = 1
+
+        def move_lightship (r_delta = 0.0, theta_delta = 0.0, x_delta = 0.0, y_delta = 0.0, run_time = beat_time, r_rate_func = smooth, theta_rate_func = smooth, x_rate_func = smooth, y_rate_func = smooth, move_camera = True, frame_rate_func = linear, lag = 0.05, relative = True):
+            r_new  = r_tracker_main.get_value() + r_delta if relative else r_delta
+            theta_new  = theta_tracker_main.get_value() + theta_delta if relative else theta_delta
+            x_new = x_tracker_main.get_value() + x_delta if relative else x_delta
+            y_new = y_tracker_main.get_value() + y_delta if relative else y_delta
             return [
                 *([
                     self.camera.frame.animate(run_time = run_time, rate_func = frame_rate_func).move_to(r_new*dir(theta_new) + x_new*RIGHT + y_new*UP) # pyright: ignore[reportAttributeAccessIssue]
                 ] if move_camera else []),
-                alpha_tracker.animate(run_time = run_time, rate_func = linear).increment_value(PI*run_time/beat_time),
-                LaggedStart(
+                alpha_tracker.animate(run_time = run_time, rate_func = linear).increment_value(alpha_rate*PI*run_time/beat_time),
+                (LaggedStart(
                     AnimationGroup(
                         r_tracker_main.animate(rate_func = r_rate_func).increment_value(r_delta),
                         theta_tracker_main.animate(rate_func = theta_rate_func).increment_value(theta_delta),
@@ -721,53 +730,278 @@ class Main (MovingCameraScene):
                     ),
                     lag_ratio = lag,
                     run_time = run_time
-                )
+                ) if relative else LaggedStart(
+                    AnimationGroup(
+                        x_tracker_main.animate(rate_func = x_rate_func).set_value(x_delta),
+                        y_tracker_main.animate(rate_func = y_rate_func).set_value(y_delta),
+                    ),
+                    AnimationGroup(
+                        x_tracker_lag.animate(rate_func = x_rate_func).set_value(x_delta),
+                        y_tracker_lag.animate(rate_func = y_rate_func).set_value(y_delta),
+                    ),
+                    lag_ratio = lag,
+                    run_time = run_time
+                ))
             ]
 
         self.play(
             *move_lightship(r_delta = 1.4, theta_delta = 3*PI/2, run_time = 2.8*beat_time, r_rate_func = rush_from, theta_rate_func = rush_from, move_camera = True),
         )
 
-        # self.play(
-        #     *move_lightship(x_delta = -1.4, y_delta = 3.5, run_time = 3*beat_time, x_rate_func = linear, y_rate_func = linear),
-        # )
+        # Lighting torches
 
-        vec = 5*dir(theta_tracker_main.get_value()+PI/2)
+        torch_radius = 0.3
+        def create_torch (pos):
+            return VGroup(
+                Circle(radius = torch_radius).set_color(ORANGE).move_to(pos),
+                create_glow(Dot(pos), rad = 0.5, num = 70)
+            )
+
+        def prelight_torch (torch, *args, **kwargs):
+            return Create(torch[0], *args, **kwargs)
+
+        def light_torch (torch, *args, **kwargs):
+            return AnimationGroup(
+                torch[0].animate.set_color(YELLOW),
+                FadeIn(torch[1], scale = .3),
+                *args,
+                **kwargs
+            )
+
+        def get_current_pos ():
+            return r_tracker_main.get_value()*dir(theta_tracker_main.get_value()) + (x_tracker_main.get_value() * RIGHT + y_tracker_lag.get_value() * UP)
+
+        vec = 7*dir(theta_tracker_main.get_value()+PI/2)
+        torch1 = create_torch(get_current_pos() + vec)
         self.play(
-            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1.1*beat_time, x_rate_func = linear, y_rate_func = linear, frame_rate_func = rush_into),
+            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1.1*beat_time, x_rate_func = rush_from, y_rate_func = rush_from, frame_rate_func = linear),
+            prelight_torch(torch1, run_time = 1.1*beat_time, rate_func = linear)
         )
         self.play(
-            # *move_lightship(x_delta = -3.4, y_delta = 4.5, run_time = 2*beat_time, x_rate_func = linear, y_rate_func = linear),
-            *move_lightship(r_delta = 0.0, theta_delta = PI/3, run_time = 1.1*beat_time, r_rate_func = linear, theta_rate_func = linear, frame_rate_func = rush_into),
+            *move_lightship(r_delta = 0.0, theta_delta = PI/2.5, run_time = 1.1*beat_time, r_rate_func = linear, theta_rate_func = linear, frame_rate_func = linear),
+            light_torch(torch1, run_time = 1.1*beat_time, rate_func = rush_from)
         )
-        vec = 5*dir(theta_tracker_main.get_value()+PI/2)
+        vec = 7*dir(theta_tracker_main.get_value()+PI/2)
+        torch2 = create_torch(get_current_pos() + vec)
         self.play(
-            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, frame_rate_func = rush_into),
+            *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = rush_from, y_rate_func = rush_from, frame_rate_func = linear),
+            prelight_torch(torch2, run_time = 1.1*beat_time, rate_func = linear)
         )
         self.play(
-            *move_lightship(r_delta = 0.0, theta_delta = PI/3, run_time = 1*beat_time, r_rate_func = linear, theta_rate_func = linear, frame_rate_func = rush_into),
+            *move_lightship(r_delta = 0.0, theta_delta = PI/2.5, run_time = 1*beat_time, r_rate_func = linear, theta_rate_func = linear, frame_rate_func = linear),
+            light_torch(torch2, run_time = 1.1*beat_time, rate_func = rush_from)
         )
-        vec = 10*dir(theta_tracker_main.get_value()+PI/2)
+
+        vec = 6*dir(theta_tracker_main.get_value()+PI/2)
         self.play(
             *move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
-            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5:wqa
-                                                                                      *RIGHT).scale(1.5), # pyright: ignore[reportAttributeAccessIssue]
+            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5*RIGHT).scale(2.5), # pyright: ignore[reportAttributeAccessIssue]
         )
         self.play(
-            *move_lightship(x_delta = -3.4, y_delta = 9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
-            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5*RIGHT).scale(1.5), # pyright: ignore[reportAttributeAccessIssue]
+            *move_lightship(x_delta = 17.9, y_delta = -6.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
+            r_tracker_main.animate(run_time = beat_time).set_value(0),
+            r_tracker_lag.animate(run_time = beat_time).set_value(0),
+            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5*RIGHT).scale(2.5), # pyright: ignore[reportAttributeAccessIssue]
         )
+
+        cur_time = 1.5*beat_time
         self.play(
-            *move_lightship(x_delta = -3.4, y_delta = -9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False),
-            self.camera.frame.animate(rate_func = linear, run_time = beat_time).shift(-5*RIGHT).scale(1.5), # pyright: ignore[reportAttributeAccessIssue]
+            # *move_lightship(move_camera = False, run_time = 1.5*beat_time),
+            alpha_tracker.animate.increment_value(alpha_rate * PI * cur_time/beat_time),
+            middle_scale_tracher.animate.set_value(0.7),
+            command_scale_tracher.animate.set_value(1.2),
+            nucleus_scale_tracker.animate.set_value(1.2),
+            # FocusOn(nucleus[0].get_center(), color = YELLOW, opacity = .15),
+            run_time = cur_time,
+            rate_func = linear
         )
-        # self.play(
-        #     Succession(
-        #         AnimationGroup(*move_lightship(x_delta = vec[0], y_delta = vec[1], run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False)),
-        #         AnimationGroup(*move_lightship(x_delta = -3.4, y_delta = 9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False)),
-        #         AnimationGroup(*move_lightship(x_delta = -3.4, y_delta = -9.1, run_time = 1*beat_time, x_rate_func = linear, y_rate_func = linear, move_camera = False)),
-        #     ),
-        #     self.camera.frame.animate(rate_func = rush_from, run_time = 3*beat_time).shift(-6*LEFT).scale(6), # pyright: ignore[reportAttributeAccessIssue]
-        # )
+
+        number_of_torches = 27
+        random.seed(6)
+        x_randoms = random.random(30)
+        y_randoms = random.random(30)
+        x_min = -51
+        x_max = 16
+        y_min = -13
+        y_max = 31
+        x_coords = [ interpolate(x_min, x_max, x_randoms[i]) for i in range(number_of_torches) ]
+        y_coords = [ interpolate(y_min, y_max, y_randoms[i]) for i in range(number_of_torches) ]
+
+        torches = [ create_torch(x_coords[i]*RIGHT + y_coords[i]*UP) for i in range(number_of_torches) ]
+        torches.append(torch1)
+        torches.append(torch2)
+
+        alpha_rate = 4
+
+        self.play(
+            *move_lightship(x_delta = x_coords[0], y_delta = y_coords[0], relative = False, move_camera = False, run_time = 1.5*beat_time, x_rate_func = rush_from, y_rate_func = rush_from),
+            *[ prelight_torch(torch, run_time = 1.5*beat_time) for torch in torches ],
+        )
+
+        for i in range(1,8):
+            self.play(
+                *move_lightship(x_delta = x_coords[i], y_delta = y_coords[i], relative = False, move_camera = False, run_time = beat_time/3, x_rate_func = rush_from, y_rate_func = rush_from),
+                light_torch(torches[i-1], run_time = beat_time/3, rate_func = rush_from)
+            )
+
+        self.play(
+            *move_lightship(x_delta = x_coords[8], y_delta = y_coords[8], relative = False, move_camera = False, run_time = 1.5*beat_time, x_rate_func = rush_from, y_rate_func = rush_from),
+            light_torch(torches[7], run_time = beat_time/3, rate_func = rush_from)
+        )
+
+        for i in range(9,16):
+            self.play(
+                *move_lightship(x_delta = x_coords[i], y_delta = y_coords[i], relative = False, move_camera = False, run_time = beat_time/3, x_rate_func = rush_from, y_rate_func = rush_from),
+                light_torch(torches[i-1], run_time = beat_time/3, rate_func = rush_from)
+            )
+
+        for i in range(16,22):
+            self.play(
+                *move_lightship(x_delta = x_coords[i], y_delta = y_coords[i], relative = False, move_camera = False, run_time = 1*beat_time, x_rate_func = rush_from, y_rate_func = rush_from),
+                light_torch(torches[i-1], run_time = beat_time/3, rate_func = rush_from),
+                FadeOut(Circle(radius = 0.3, color = YELLOW).move_to(torches[i-1][0].get_center()), scale = 100, run_time = beat_time, rate_func = rush_from)
+            )
+
+        for i in range(22,number_of_torches):
+            self.play(
+                *move_lightship(x_delta = x_coords[i], y_delta = y_coords[i], relative = False, move_camera = False, run_time = beat_time/3, x_rate_func = rush_from, y_rate_func = rush_from),
+                light_torch(torches[i-1], run_time = beat_time/3, rate_func = rush_from)
+            )
+
+        alpha_rate = 2
+
+        # Lighting the network
+
+        number_of_connections = 141
+        random.seed(6)
+        beginnings = [ random.randint(0, number_of_torches+2) for _ in range(number_of_connections) ]
+        endings = [ random.randint(0, number_of_torches+2) for _ in range(number_of_connections) ]
+        # connections = [ always_redraw(lambda: Line(torches[beginnings[i]][0].get_center(), torches[endings[i]][0].get_center(), z_index = -1, stroke_width = 10).set_color(YELLOW)) for i in range(number_of_connections) ]
+        connections = [ Line(torches[beginnings[i]][0].get_center(), torches[endings[i]][0].get_center(), z_index = -3, stroke_width = 10).set_color(YELLOW) for i in range(number_of_connections) ]
+        connection_group = VGroup(*connections)
+        # connections = [ Line(torches[random.randint(0,number_of_torches)][0].get_center(), torches[random.randint(0,number_of_torches)][0].get_center(), z_index = -1, stroke_width = 10).set_color(YELLOW) for _ in range(number_of_connections) ]
+
+        def flash_connection (index, run_time, ratio, *args, **kwargs):
+            return Succession(
+                Create(connections[index], run_time = run_time*(ratio/(1+ratio)), rate_func = linear),
+                FadeOut(connections[index], run_time = run_time/(1+ratio), rate_func = rush_from),
+                *args,
+                **kwargs
+            )
+
+        cur_time = 4*beat_time
+
+        theta_tracker_main.set_value(PI+PI/3.9)
+        theta_tracker_lag.set_value(PI+PI/3.9)
+
+        self.play(
+            *move_lightship(r_delta = 7, theta_delta = -PI/4, r_rate_func = linear, theta_rate_func = linear, move_camera = False, run_time = cur_time),
+            light_torch(torches[number_of_torches-1], run_time = beat_time/3, rate_func = rush_from),
+            nucleus_scale_tracker.animate(run_time = cur_time, rate_func = linear).set_value(1),
+            middle_scale_tracher.animate(run_time = cur_time, rate_func = linear).set_value(1),
+            command_scale_tracher.animate(run_time = cur_time, rate_func = linear).set_value(1),
+            # *[ torch.animate(run_time = cur_time, rate_func = linear).shift((random.rand()-.5)*RIGHT + (random.rand()-.5)*UP) for torch in torches ],
+            LaggedStart(
+                *[ flash_connection(i, beat_time, 1/5) for i in range(18) ],
+                lag_ratio = 1/6
+            )
+        )
+
+        self.play(
+            # *move_lightship(r_delta = 3, theta_delta = PI/5, r_rate_func = linear, theta_rate_func = linear, move_camera = False, run_time = cur_time),
+            *move_lightship(move_camera = False, run_time = cur_time),
+            middle_scale_tracher.animate(run_time = cur_time, rate_func = linear).set_value(1),
+            command_scale_tracher.animate(run_time = cur_time, rate_func = linear).set_value(1),
+            # *[ torch.animate(run_time = cur_time, rate_func = linear).shift((random.rand()-.5)*RIGHT + (random.rand()-.5)*UP) for torch in torches ],
+            LaggedStart(
+                *[ flash_connection(i, beat_time, 1/5) for i in range(18,36) ],
+                lag_ratio = 1/6
+            )
+        )
+
+        cur_time = 8*beat_time
+        alpha_rate = 1
+
+        self.play(
+            *move_lightship(move_camera = False, run_time = cur_time),
+            self.camera.frame.animate(run_time = cur_time, rate_func = linear).scale(1.1), # pyright: ignore[reportAttributeAccessIssue]
+            LaggedStart(
+                *[
+                    AnimationGroup(
+                        Write(connections[i], run_time = beat_time, rate_func = rush_from),
+                        Flash(torches[beginnings[i]][0].get_center(), run_time = beat_time/3, rate_func = linear, line_length = 1.2, color = YELLOW),
+                        Succession(
+                            torches[beginnings[i]][1].animate(run_time = beat_time/3).scale(2),
+                            torches[beginnings[i]][1].animate(run_time = 2*beat_time/3).scale(.5),
+                        )
+                    ) for i in range(38,80)
+                ],
+                lag_ratio = 1/6
+            )
+        )
+
+        self.remove(*tracing_paths)
+        tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = beat_time, stroke_opacity = [1,1]).set_color(YELLOW_C) for i in range(4) ]
+        self.add(*tracing_paths)
+
+        cur_time = beat_time
+
+        self.play(
+            *move_lightship(move_camera = False, run_time = cur_time),
+            *[
+                torch[1].animate(run_time = beat_time, rate_func = rush_from).scale(3)
+                for torch in torches
+            ],
+            *[
+                Flash(torch[0].get_center(), run_time = cur_time, line_length = 2, rate_func = rush_from)
+                for torch in torches
+            ],
+            *[
+                Write(connections[i], run_time = cur_time, rate_func = rush_from)
+                for i in range(80,number_of_connections)
+            ]
+        )
+
+        def draw_collection ():
+            return VGroup(
+                *[
+                    Line(torches[beginnings[i]][0].get_center(), torches[endings[i]][0].get_center(), z_index = -3, stroke_width = 10).set_color(YELLOW)
+                    for i in range(number_of_connections)
+                ]
+            )
+
+        self.remove(*connections)
+        # connections = [ always_redraw(lambda: Line(torches[beginnings[i]][0].get_center(), torches[endings[i]][0].get_center(), z_index = -3, stroke_width = 10).set_color(YELLOW)) for i in range(number_of_connections) ]
+        # self.add(*connections)
+        collection = always_redraw(draw_collection)
+        self.add(collection)
+
+        cur_time = beat_time
+
+        def tilt ():
+            self.play(
+                *move_lightship(move_camera = False, run_time = cur_time),
+                *[
+                    torch.animate(run_time = cur_time, rate_func = rush_from).shift(2*(random.random()-.5)*RIGHT + 2*(random.random()-.5)*UP)
+                    for torch in torches
+                ]
+            )
+
+        for _ in range(3):
+            tilt()
+
+        self.play(
+            *move_lightship(r_delta = 25, theta_delta = -2.1*PI, run_time = 6*beat_time, r_rate_func = rush_from, theta_rate_func = linear, move_camera = False, lag = 0.005),
+            self.camera.frame.animate(run_time = 6*beat_time, rate_func = rush_from).scale(2).shift(10*DOWN), # pyright: ignore[reportAttributeAccessIssue]
+            *[
+                torch.animate(run_time = cur_time, rate_func = rush_from).shift(2*(random.random()-.5)*RIGHT + 2*(random.random()-.5)*UP)
+                for torch in torches
+            ]
+            # *[ send_pulse(i, run_time = 2*beat_time) for i in range(80,100) ]
+        )
 
         self.wait(1)
+
+
+    def construct(self):
+        self.part_one()
