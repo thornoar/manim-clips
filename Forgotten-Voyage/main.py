@@ -1087,13 +1087,13 @@ class Main (MovingCameraScene):
     def construct(self):
         # self.add_sound("./track-short.mp3")
         # self.part_one()
-        self.add_sound("./part-2.mp3")
+        # self.add_sound("./part-2.mp3")
         
         s = 1.8144
         c = 0.864
         beat_time = 0.515
-        photon_radius = 0.5
-        photon_number = 100
+        photon_radius = 2.5
+        photon_number = 1
         photon_dispersion = 1.0015
         # center = [-235.04502097,38.32961899,0.0]
         center = ORIGIN
@@ -1108,7 +1108,7 @@ class Main (MovingCameraScene):
         colors = [ "#0289FE", "#FC5105", "#B232D1", "#1FDEFF", "#FF4F04", "#B530D1", "#74CE03", "#29E0FF", "#FF0C41", "#019DFF", "#FF5007", "#FF1042", "#B630D3", "#75CF05", "#1EDFFE", "#FF0E43" ]
         rotating_squares = [ Square(z_index = -1, color = colors[0]).scale(s).rotate(i*PI/4) for i in range(number_of_squares) ]
         photons = [create_glow(dot, rad = photon_radius, num = photon_number, dispersion = photon_dispersion, col = YELLOW_C) for dot in dots] # pyright: ignore[reportAttributeAccessIssue]
-        nucleus = create_glow(Dot(center), rad = 2.5, num = 300, dispersion = 1.0016)
+        nucleus = create_glow(Dot(center), rad = 2.5, num = 20, dispersion = 1.004)
 
         line1 = Line(start = c*dir(-PI/6), end = c*dir(PI/2), color = ORANGE, z_index = -0.5)
         line2 = Line(start = c*dir(PI/2), end = c*dir(PI/2+2*PI/3), color = ORANGE, z_index = -0.5)
@@ -1130,9 +1130,7 @@ class Main (MovingCameraScene):
         lightship = VGroup(outer_layer, middle_layer, core_layer, nucleus)
 
         core_group = core_layer
-        # nucleus_group = VGroup(nucleus)
         middle_group = middle_layer
-        # command_group = VGroup(outer_layer, *photons)
         command_group = outer_layer
         command_group.add(*photons)
 
@@ -1218,17 +1216,81 @@ class Main (MovingCameraScene):
         self.add(*photons)
         self.add(lightship)
 
+        # Encountering the black domain
+
         black_domain_size = 10
-        black_domain = Circle(color = BLACK, fill_color = BLACK, fill_opacity = 1.0, z_index = 1).scale(black_domain_size).shift(17*LEFT)
+        black_domain_pos = 20*LEFT
+        black_domain = Circle(color = RED, fill_color = BLACK, fill_opacity = 1.0, radius = black_domain_size).shift(black_domain_pos)
 
         self.add(black_domain)
 
-        cur_time = 2*beat_time
+        cur_time = 3*beat_time
         self.play(
             *move_lightship(run_time = cur_time),
-            nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).set_value(2),
+            # nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).set_value(3),
+            self.camera.frame.animate(run_time = cur_time, rate_func = linear).scale(0.85).shift(8*LEFT) # pyright: ignore[reportAttributeAccessIssue]
+        )
+        cur_time = beat_time
+        self.play(
+            *move_lightship(run_time = cur_time, move_camera = False),
+            FadeOut(Circle(color = YELLOW, radius = 0.2), scale = 100, rate_func = rush_from, run_time = cur_time)
+        )
+        for _ in range(3):
+            self.play(
+                *move_lightship(run_time = cur_time, move_camera = False),
+                FadeOut(Circle(color = RED, radius = black_domain_size, z_index = 1).shift(black_domain_pos), scale = 0.05, rate_func = rush_from, run_time = cur_time)
+            )
+
+        command_group.remove(*[photons[i] for i in range(3)])
+        # command_group.clear_updaters()
+
+        domain_cage_dist = 4
+
+        bait_position1 = 1*LEFT+10*UP
+        bait_position2 = 2*RIGHT+8*DOWN
+        bait_position3 = 5*RIGHT+2*UP
+
+        cur_time = beat_time
+        self.play(
+            *move_lightship(run_time = cur_time, move_camera = False),
+            photons[0].animate(run_time = cur_time, rate_func = rush_from).move_to(black_domain_pos+black_domain_size*RIGHT+domain_cage_dist*RIGHT).scale(3),
+            photons[1].animate(run_time = cur_time, rate_func = rush_from).move_to(black_domain_pos+black_domain_size*RIGHT+domain_cage_dist*RIGHT).scale(3),
+            photons[2].animate(run_time = cur_time, rate_func = rush_from).move_to(bait_position1).scale(3),
         )
 
-        # self.play(
-        #     photons[0].animate.shift(3*RIGHT)
-        # )
+        cage_arc1 = Arc(radius = black_domain_size+domain_cage_dist, start_angle = 0, angle = PI, color = YELLOW).shift(black_domain_pos)
+        cage_arc1_copy = cage_arc1.copy()
+        cage_arc2 = Arc(radius = black_domain_size+domain_cage_dist, start_angle = 0, angle = -PI, color = YELLOW).shift(black_domain_pos)
+        cage_arc2_copy = cage_arc1.copy()
+
+        cur_time = 4*beat_time
+
+        arc_circles1 = [Circle(radius = .15, color = YELLOW).move_to(black_domain_pos+(black_domain_size+domain_cage_dist)*dir(i*PI/4)) for i in range(0,4)]
+        arc_circles2 = [Circle(radius = .15, color = YELLOW).move_to(black_domain_pos+(black_domain_size+domain_cage_dist)*dir(-i*PI/4)) for i in range(0,4)]
+        bait_circle1 = Circle(radius = .15, color = YELLOW).move_to(bait_position1)
+        bait_circle2 = Circle(radius = .15, color = YELLOW).move_to(bait_position2)
+
+        self.play(
+            MoveAlongPath(photons[0], cage_arc1_copy, run_time = cur_time, rate_func = linear),
+            MoveAlongPath(photons[1], cage_arc2_copy, run_time = cur_time, rate_func = linear),
+            Create(cage_arc1, run_time = cur_time, rate_func = linear),
+            Create(cage_arc2, run_time = cur_time, rate_func = linear),
+            black_domain.animate(run_time = cur_time, rate_func = rush_into).shift(domain_cage_dist*RIGHT),
+            LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles1 ], lag_ratio = 1.0),
+            LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles2 ], lag_ratio = 1.0),
+            LaggedStart(
+                Succession( FadeIn(bait_circle1, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle1, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
+                MoveAlongPath(photons[2], Line(bait_position1, bait_position2), run_time = beat_time, rate_func = rush_from),
+                Succession( FadeIn(bait_circle2, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle2, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
+                # MoveAlongPath(photons[2], Line(bait_position2, bait_position3), run_time = beat_time, rate_func = rush_from),
+                lag_ratio = 1.0
+            ),
+            *move_lightship(x_delta = domain_cage_dist+3, x_rate_func = rush_into, move_camera = False, run_time = cur_time),
+        )
+
+        self.play(
+            *move_lightship(run_time = cur_time, move_camera = False),
+            photons[2].animate(run_time = cur_time, rate_func = rush_from).move_to(bait_position2).scale(3),
+        )
+
+        self.wait(3)
