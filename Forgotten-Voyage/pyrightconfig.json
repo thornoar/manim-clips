@@ -1,6 +1,9 @@
 {
     "include": [
-        "./logo"
+        "./logo",
+        "./combined",
+        "./current",
+        "./common"
     ],
     "typeCheckingMode": "basic",
     "reportArgumentType": "warning",
