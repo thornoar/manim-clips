@@ -136,7 +136,7 @@ def current (scene: Scene):
 
     # Encountering the black domain
 
-    black_domain_size = 10
+    black_domain_size = 9
     black_domain_pos = 20*LEFT
     black_domain = Circle(color = RED, fill_color = BLACK, fill_opacity = 1.0, radius = black_domain_size).shift(black_domain_pos)
 
@@ -162,11 +162,13 @@ def current (scene: Scene):
     command_group.remove(*[photons[i] for i in range(3)])
     # command_group.clear_updaters()
 
-    domain_cage_dist = 4
+    # domain_cage_dist = black_domain_size * (sqrt(2)-1)
+    domain_cage_dist = black_domain_size * 0.6
+    cage_circle_size = black_domain_size + domain_cage_dist
 
     bait_position1 = 1*LEFT+10*UP
     bait_position2 = 2*RIGHT+8*DOWN
-    bait_position3 = 5*RIGHT+2*UP
+    bait_position3 = 5*RIGHT+5*UP
 
     cur_time = beat_time
     scene.play(
@@ -177,9 +179,9 @@ def current (scene: Scene):
     )
 
     cage_arc1 = Arc(radius = black_domain_size+domain_cage_dist, start_angle = 0, angle = PI, color = YELLOW).shift(black_domain_pos)
-    cage_arc1_copy = cage_arc1.copy()
     cage_arc2 = Arc(radius = black_domain_size+domain_cage_dist, start_angle = 0, angle = -PI, color = YELLOW).shift(black_domain_pos)
-    cage_arc2_copy = cage_arc1.copy()
+    cage_arc1_copy = cage_arc1.copy()
+    cage_arc2_copy = cage_arc2.copy()
 
     cur_time = 4*beat_time
 
@@ -187,6 +189,7 @@ def current (scene: Scene):
     arc_circles2 = [Circle(radius = .15, color = YELLOW).move_to(black_domain_pos+(black_domain_size+domain_cage_dist)*dir(-i*PI/4)) for i in range(0,4)]
     bait_circle1 = Circle(radius = .15, color = YELLOW).move_to(bait_position1)
     bait_circle2 = Circle(radius = .15, color = YELLOW).move_to(bait_position2)
+    bait_circle3 = Circle(radius = .15, color = YELLOW).move_to(bait_position3)
 
     scene.play(
         MoveAlongPath(photons[0], cage_arc1_copy, run_time = cur_time, rate_func = linear),
@@ -197,18 +200,111 @@ def current (scene: Scene):
         LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles1 ], lag_ratio = 1.0),
         LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles2 ], lag_ratio = 1.0),
         LaggedStart(
-            Succession( FadeIn(bait_circle1, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle1, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
+            MoveAlongPath(photons[2], Line(bait_position1, bait_position1), run_time = beat_time, rate_func = rush_from),
             MoveAlongPath(photons[2], Line(bait_position1, bait_position2), run_time = beat_time, rate_func = rush_from),
+            Wait(beat_time),
+            MoveAlongPath(photons[2], Line(bait_position2, bait_position3), run_time = beat_time, rate_func = rush_from),
+            lag_ratio = 1.0
+        ),
+        LaggedStart(
+            Succession( FadeIn(bait_circle1, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle1, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
+            Wait(beat_time),
             Succession( FadeIn(bait_circle2, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle2, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
-            # MoveAlongPath(photons[2], Line(bait_position2, bait_position3), run_time = beat_time, rate_func = rush_from),
+            Wait(beat_time),
+            # Succession( FadeIn(bait_circle3, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle2, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
             lag_ratio = 1.0
         ),
         *move_lightship(x_delta = domain_cage_dist+3, x_rate_func = rush_into, move_camera = False, run_time = cur_time),
     )
 
+    # cage_arc1_hardened = Arc(radius = black_domain_size+domain_cage_dist, start_angle = PI, angle = -PI, color = ORANGE).shift(black_domain_pos)
+    # cage_arc2_hardened = Arc(radius = black_domain_size+domain_cage_dist, start_angle = PI, angle = PI, color = ORANGE).shift(black_domain_pos)
+    # cage_arc1_hardened_copy = cage_arc1_hardened.copy()
+    # cage_arc2_hardened_copy = cage_arc2_hardened.copy()
+
+    arc_circles1 = [Circle(radius = .15, color = YELLOW).move_to(black_domain_pos+(black_domain_size+domain_cage_dist)*dir(PI+i*PI/3)) for i in range(0,3)]
+    arc_circles2 = [Circle(radius = .15, color = YELLOW).move_to(black_domain_pos+(black_domain_size+domain_cage_dist)*dir(PI-i*PI/3)) for i in range(0,3)]
+
+    cur_time = 2*beat_time
+
+    # black_domain_shifted1 = black_domain.copy().shift(2*domain_cage_dist*LEFT)
+    # black_domain_shifted2 = black_domain.copy().shift(domain_cage_dist*(LEFT+dir(PI/6)))
+    # black_domain_shifted3 = black_domain.copy().shift(domain_cage_dist*(LEFT+dir(8*PI/6)))
+
+    # domain_x_tracker = ValueTracker(domain_cage_dist)
+    # domain_y_tracker = ValueTracker(0)
+    # def update_domain (m):
+    #     m.restore()
+    #     return m.shift(domain_x_tracker.get_value()*RIGHT + domain_y_tracker.get_value()*UP)
+    #
+    # black_domain.save_state()
+    # black_domain.add_updater(update_domain)
+
+    line_1_1 = Line(black_domain_pos + cage_circle_size*LEFT, black_domain_pos + cage_circle_size*UP, color = YELLOW)
+    line_1_2 = Line(black_domain_pos + cage_circle_size*UP, black_domain_pos + cage_circle_size*RIGHT, color = YELLOW)
+    line_2_1 = Line(black_domain_pos + cage_circle_size*LEFT, black_domain_pos + cage_circle_size*DOWN, color = YELLOW)
+    line_2_2 = Line(black_domain_pos + cage_circle_size*DOWN, black_domain_pos + cage_circle_size*RIGHT, color = YELLOW)
+    line_1_1_copy = line_1_1.copy()
+    line_1_2_copy = line_1_2.copy()
+    line_2_1_copy = line_2_1.copy()
+    line_2_2_copy = line_2_2.copy()
+
+    domain_position1 = black_domain_pos + (-domain_cage_dist+(black_domain_size*(sqrt(2)-1)))*RIGHT
+    domain_position2 = black_domain_pos + (cage_circle_size/sqrt(2) - black_domain_size)*dir(PI/4)
+
+    cage_circle = Circle(radius = cage_circle_size, color = circle_color).move_to(black_domain_pos)
+
     scene.play(
+        LaggedStart(
+            MoveAlongPath(photons[0], line_1_1, run_time = beat_time, rate_func = linear),
+            MoveAlongPath(photons[0], line_1_2, run_time = beat_time, rate_func = linear),
+            lag_ratio = 1.0
+        ),
+        LaggedStart(
+            Create(line_1_1_copy, run_time = beat_time, rate_func = linear),
+            Create(line_1_2_copy, run_time = beat_time, rate_func = linear),
+            lag_ratio = 1.0
+        ),
+        LaggedStart(
+            MoveAlongPath(photons[1], line_2_1, run_time = beat_time, rate_func = linear),
+            MoveAlongPath(photons[1], line_2_2, run_time = beat_time, rate_func = linear),
+            lag_ratio = 1.0
+        ),
+        LaggedStart(
+            Create(line_2_1_copy, run_time = beat_time, rate_func = linear),
+            Create(line_2_2_copy, run_time = beat_time, rate_func = linear),
+            lag_ratio = 1.0
+        ),
+        # Create(cage_arc2_hardened, run_time = cur_time, rate_func = linear),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles1 ], lag_ratio = 1.0),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles2 ], lag_ratio = 1.0),
+        # black_domain.animate(run_time = cur_time, rate_func = rush_into).shift(domain_cage_dist*RIGHT),
+        # LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles1 ], lag_ratio = 1.0),
+        # LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in arc_circles2 ], lag_ratio = 1.0),
+        # black_domain.animate(run_time = cur_time, rate_func = rush_from).shift(domain_cage_dist*LEFT),
+        LaggedStart(
+            MoveAlongPath(black_domain, Line(black_domain_pos + domain_cage_dist*RIGHT, domain_position1), run_time = beat_time, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position1, domain_position2), run_time = beat_time, rate_func = rush_from),
+            # MoveAlongPath(black_domain, Line(black_domain_pos + domain_cage_dist*RIGHT, black_domain_pos + domain_cage_dist*LEFT), run_time = beat_time, rate_func = rush_from),
+            # MoveAlongPath(black_domain, Line(black_domain_pos + domain_cage_dist*LEFT, black_domain_pos + domain_cage_dist*dir(PI/6)), run_time = beat_time, rate_func = rush_from),
+            # MoveAlongPath(black_domain, Line(black_domain_pos + domain_cage_dist*dir(PI/6), black_domain_pos + domain_cage_dist*dir(8*PI/6)), run_time = beat_time, rate_func = rush_from),
+            # black_domain.animate(run_time = beat_time, rate_func = rush_from).shift(2*domain_cage_dist*LEFT),
+            # black_domain.animate(run_time = beat_time, rate_func = rush_from).shift(domain_cage_dist*(RIGHT+dir(PI/6))),
+            # black_domain.animate(run_time = beat_time, rate_func = rush_from).shift(domain_cage_dist*(dir(8*PI/6) - dir(PI/6))),
+            # Transform(black_domain, black_domain_shifted1, run_time = beat_time, rate_func = rush_from),
+            # Transform(black_domain_shifted1, black_domain_shifted2, run_time = beat_time, rate_func = rush_from),
+            # Transform(black_domain_shifted2, black_domain_shifted3, run_time = beat_time, rate_func = rush_from),
+            # domain_x_tracker.animate(run_time = beat_time).set_value(0),
+            # domain_x_tracker.animate(run_time = beat_time).set_value(domain_cage_dist),
+            # domain_x_tracker.animate(run_time = beat_time).set_value(0),
+            lag_ratio = 1.0
+        ),
+        Succession( FadeIn(bait_circle3, run_time = .1*beat_time, rate_func = rush_from), FadeOut(bait_circle3, scale = 10, run_time = .9*beat_time, rate_func = rush_from)),
+        FadeIn(cage_circle, rate_func = linear, run_time = cur_time),
+        FadeOut(cage_arc1, rate_func = linear, run_time = cur_time),
+        FadeOut(cage_arc2, rate_func = linear, run_time = cur_time),
         *move_lightship(run_time = cur_time, move_camera = False),
-        photons[2].animate(run_time = cur_time, rate_func = rush_from).move_to(bait_position2).scale(3),
+        photons[2].animate(run_time = cur_time, rate_func = rush_from).move_to(bait_position3).scale(3),
     )
 
     scene.wait(3)
