@@ -595,8 +595,8 @@ def combine (scene: Scene):
     )
 
     # nucleus_layer = VGroup(nucleus, *photons)
-    command_group = VGroup(outer_layer, *photons)
-    # command_group.rotate(2*PI, about_point = ORIGIN)
+    outer_group = VGroup(outer_layer)
+    # outer_group.rotate(2*PI, about_point = ORIGIN)
 
     scene.remove(*tracing_paths)
     tracing_paths = [ TracedPath(photons[i][0].get_center, dissipating_time = 2*beat_time, stroke_opacity = [1,1]).set_color(YELLOW_C) for i in range(4) ]
@@ -610,13 +610,14 @@ def combine (scene: Scene):
         Flash(core_circle_big, color = YELLOW, num_lines = 30, flash_radius = c + 0.1*(s-c), line_length = 0.8*(s-c), rate_func = rush_from),
         Rotate(core_layer, cur_time/beat_time*PI/3, rate_func = linear),
         Rotate(middle_layer, -cur_time/beat_time*PI/4, rate_func = linear),
-        Rotate(command_group, cur_time/beat_time*PI, about_point = ORIGIN, rate_func = linear),
+        Rotate(outer_group, cur_time/beat_time*PI, about_point = ORIGIN, rate_func = linear),
         run_time = cur_time
     )
 
     core_group = core_layer
     nucleus_group = VGroup(nucleus)
     # core_group.add(nucleus)
+    photon_group = VGroup(*photons)
     middle_group = middle_layer
 
     nucleus_scale_tracker = ValueTracker(1)
@@ -654,8 +655,10 @@ def combine (scene: Scene):
     core_group.add_updater(update_core)
     middle_group.save_state()
     middle_group.add_updater(update_middle)
-    command_group.save_state()
-    command_group.add_updater(update_command)
+    outer_group.save_state()
+    outer_group.add_updater(update_command)
+    photon_group.save_state()
+    photon_group.add_updater(update_command)
 
     alpha_rate = 1
 
