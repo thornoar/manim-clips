@@ -8,5 +8,5 @@ from current import *
 class Main (MovingCameraScene):
     def construct(self):
         # self.add_sound("./part-2.mp3")
-        # combine(self)
-        current(self)
+        combine(self)
+        # current(self)
