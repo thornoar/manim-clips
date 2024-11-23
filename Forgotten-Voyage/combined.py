@@ -1361,6 +1361,7 @@ def combine (scene: Scene):
     photons[3].clear_updaters()
     outer_group.clear_updaters()
 
+
     scene.play(
         Create(segment1_1_1, run_time = beat_time, rate_func = rush_into),
         Create(segment1_2_1, run_time = beat_time, rate_func = rush_into),
