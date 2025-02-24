@@ -1,5 +1,5 @@
 from common import *
-from numpy import random
+from numpy import arctan2, random
 
 def combine (scene: Scene):
     # scene.add_sound("./part1+2.mp3")
@@ -641,8 +641,9 @@ def combine (scene: Scene):
     # core_group.add(nucleus)
     middle_group = middle_layer
 
-    nucleus_scale_tracker = ValueTracker(1)
+    nucleus_scale_tracker = ValueTracker(1.0)
     nucleus_dispersion_scale_tracker = ValueTracker(1.0)
+    nucleus_shift_tracker = ValueTracker(0.0)
 
     r_tracker_main = ValueTracker(0)
     theta_tracker_main = ValueTracker(PI/2)
@@ -664,6 +665,7 @@ def combine (scene: Scene):
         m.restore()
         scale_glow(m, disp_scale = nucleus_dispersion_scale_tracker.get_value())
         m.scale(nucleus_scale_tracker.get_value())
+        m.shift(nucleus_shift_tracker.get_value() * RIGHT)
         return m.shift(r_tracker_main.get_value()*dir(theta_tracker_main.get_value())).shift(x_tracker_main.get_value()*RIGHT + y_tracker_main.get_value()*UP)
 
     # for i, circle in enumerate(nucleus):
@@ -1075,7 +1077,7 @@ def combine (scene: Scene):
     y_tracker_main.set_value(0)
     y_tracker_lag.set_value(0)
 
-    # --------------- PART 2 --------------------------------
+    # --------------- PART 2 ---------------
 
     # Encountering the black domain
 
@@ -1088,20 +1090,23 @@ def combine (scene: Scene):
 
     scene.add(black_domain)
 
-    domain_fade_circle = Circle(color = RED, radius = black_domain_size, z_index = 5).shift(black_domain_pos)
+    domain_fade_circle = Circle(color = RED, radius = black_domain_size, stroke_width = 20, z_index = 10).shift(black_domain_pos)
 
     cur_time = 3*beat_time
     scene.play(
         *move_lightship(run_time = cur_time),
         # nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(0.00001),
         nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(3.5),
-        scene.camera.frame.animate(run_time = cur_time, rate_func = linear).scale(0.85).shift(8*LEFT) # pyright: ignore[reportAttributeAccessIssue]
+        scene.camera.frame.animate(run_time = cur_time, rate_func = linear).scale(0.85) # pyright: ignore[reportAttributeAccessIssue]
     )
+
+    scale = 0.95
 
     cur_time = beat_time
     scene.play(
         *move_lightship(run_time = cur_time, move_camera = False),
-        FadeOut(Circle(color = YELLOW, radius = 0.2), scale = 100, rate_func = rush_from, run_time = cur_time)
+        FadeOut(Circle(color = YELLOW, radius = 0.2), scale = 100, rate_func = rush_from, run_time = cur_time),
+        scene.camera.frame.animate(run_time = cur_time, rate_func = linear).shift(2*LEFT) # pyright: ignore[reportAttributeAccessIssue]
     )
     for _ in range(3):
         scene.play(
@@ -1110,6 +1115,7 @@ def combine (scene: Scene):
             
             Succession(FadeIn(domain_fade_circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
             # FadeOut(domain_fade_circle, scale = 0.05, rate_func = rush_from, run_time = cur_time)
+            scene.camera.frame.animate(run_time = cur_time, rate_func = linear).shift(2*LEFT) # pyright: ignore[reportAttributeAccessIssue]
         )
 
     photon_group.clear_updaters()
@@ -1292,9 +1298,6 @@ def combine (scene: Scene):
     outer_group.save_state()
     outer_group.add_updater(update_temp)
 
-    # outer_group.clear_updaters()
-    # outer_group.add_updater(lambda m: m.move_to(x_tracker.get_value()*RIGHT).rotate(rotate_tracker.get_value()+PI/4).scale(scale_tracker.get_value()/(2*s)))
-
     lightship_shift2 = 14
 
     cur_time = 3*beat_time
@@ -1351,7 +1354,7 @@ def combine (scene: Scene):
     segment2_2_1 = segment2_1_1.copy()
     segment2_2_2 = segment2_1_2.copy()
 
-    cage_square1 = Square(color = square_color, z_index = 0.5, stroke_width = 10).scale(cage_circle_size/sqrt(2)).rotate(PI/4).shift(black_domain_pos)
+    cage_square1 = Square(color = square_color, z_index = 1.5, stroke_width = 10).scale(cage_circle_size/sqrt(2)).rotate(PI/4).shift(black_domain_pos)
 
     cur_time = 1*beat_time
 
@@ -1550,6 +1553,8 @@ def combine (scene: Scene):
     outer_arc1.set(stroke_width = 7)
     outer_arc2.set(stroke_width = 7)
 
+    cage_outer_group = VGroup(outer_arc1, outer_arc2)
+
     scene.remove(segment1_1_1, segment1_1_2, segment1_2_1, segment1_2_2, segment2_1_1, segment2_1_2, segment2_2_1, segment2_2_2)
     scene.remove(segment1_1_1_copy, segment1_1_2_copy, segment1_2_1_copy, segment1_2_2_copy, segment2_1_1_copy, segment2_1_2_copy, segment2_2_1_copy, segment2_2_2_copy)
     scene.remove(cage_arc1_1, cage_arc1_2, cage_arc2_1, cage_arc2_2)
@@ -1597,7 +1602,7 @@ def combine (scene: Scene):
         x_tracker.animate(rate_func = linear, run_time = cur_time).set_value(-black_domain_pos_num),
         scale_tracker.animate(rate_func = linear, run_time = cur_time).set_value(cage_circle_size/s),
         rotate_tracker.animate(rate_func = linear, run_time = cur_time).increment_value(2*PI+PI/2),
-        scene.camera.frame.animate(run_time = cur_time, rate_func = rush_from).scale(1/0.15).shift((-lightship_shift-lightship_shift2)*RIGHT), # pyright: ignore[reportAttributeAccessIssue]
+        scene.camera.frame.animate(run_time = cur_time, rate_func = rush_from).scale(1/0.15).shift((-lightship_shift-lightship_shift2)*RIGHT),
         nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(-0.00005),
     )
 
@@ -1701,13 +1706,13 @@ def combine (scene: Scene):
     shift = lightship_shift + lightship_shift2
 
     circles = [ Circle(radius = 1, color = YELLOW, stroke_width = 8).move_to(shift*RIGHT) for _ in range(4) ]
-    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20).move_to(black_domain_pos) for _ in range(3) ]
+    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(4) ]
 
     cur_time = 3*beat_time
 
     scene.play(
         LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in circles[0:3] ], lag_ratio = 1.0),
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles ], lag_ratio = 1.0),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles[0:3] ], lag_ratio = 1.0),
         nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00006),
         photons[0].animate(rate_func = rush_from, run_time = cur_time).scale(1.5),
         photons[1].animate(rate_func = rush_from, run_time = cur_time).scale(1.5),
@@ -1720,26 +1725,22 @@ def combine (scene: Scene):
     scene.play(
         LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in circles[3:4] ], lag_ratio = 1.0),
         # Indicate(nucleus, color = YELLOW, scale_factor = 2, run_time = cur_time, rate_func = rush_from),
-        Succession(FadeIn(domain_fade_circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
+        Succession(FadeIn(domain_fade_circles[3], run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circles[3], scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
     )
 
-    circles = [ Circle(radius = 2, color = YELLOW, stroke_width = 18).move_to(shift*RIGHT) for _ in range(4) ]
-    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(3) ]
+    circles = [ Circle(radius = 1.4, color = YELLOW, stroke_width = 40).move_to(shift*RIGHT) for _ in range(4) ]
+    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(4) ]
 
     cur_time = 3*beat_time
 
     scene.play(
         LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in circles[0:3] ], lag_ratio = 1.0),
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles ], lag_ratio = 1.0),
-        nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00007),
-        photons[0].animate(rate_func = rush_from, run_time = cur_time).shift(1*RIGHT + 1*UP).scale(1.5),
-        photons[1].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT -1*UP).scale(1.5),
-        photons[2].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT + 1*UP).scale(1.5),
-        photons[3].animate(rate_func = rush_from, run_time = cur_time).shift(1*RIGHT - 1*UP).scale(1.5),
-        # photons[0].animate(rate_func = rush_from, run_time = cur_time).scale(1.5),
-        # photons[1].animate(rate_func = rush_from, run_time = cur_time).scale(1.5),
-        # photons[2].animate(rate_func = rush_from, run_time = cur_time).scale(1.5),
-        # photons[3].animate(rate_func = rush_from, run_time = cur_time).scale(1.5),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles[0:3] ], lag_ratio = 1.0),
+        nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00003),
+        photons[0].animate(rate_func = rush_from, run_time = cur_time).shift(2*RIGHT + 2*UP).scale(1.5),
+        photons[1].animate(rate_func = rush_from, run_time = cur_time).shift(-2*RIGHT -2*UP).scale(1.5),
+        photons[2].animate(rate_func = rush_from, run_time = cur_time).shift(-2*RIGHT + 2*UP).scale(1.5),
+        photons[3].animate(rate_func = rush_from, run_time = cur_time).shift(2*RIGHT - 2*UP).scale(1.5),
     )
 
     cur_time = beat_time
@@ -1747,61 +1748,56 @@ def combine (scene: Scene):
     scene.play(
         LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .9*beat_time, rate_func = rush_from)) for circle in circles[3:4] ], lag_ratio = 1.0),
         # Indicate(nucleus, color = YELLOW, scale_factor = 2, run_time = cur_time, rate_func = rush_from),
-        Succession(FadeIn(domain_fade_circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
+        Succession(FadeIn(domain_fade_circles[3], run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circles[3], scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
     )
 
-    circles = [ Circle(radius = 2, color = YELLOW, stroke_width = 26).move_to(shift*RIGHT) for _ in range(8) ]
-    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(3) ]
+    circles = [ Circle(radius = 1.5, color = YELLOW, stroke_width = 40).move_to(shift*RIGHT) for _ in range(8) ]
 
     cur_time = 3*beat_time
 
-    # photon_rot_group = VGroup(*photons)
-
     scene.play(
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .05*beat_time, rate_func = rush_from), FadeOut(circle, scale = 20, run_time = .45*beat_time, rate_func = rush_from)) for circle in circles[0:6] ], lag_ratio = 1.0),
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles ], lag_ratio = 1.0),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 20, run_time =.9*beat_time, rate_func = rush_from)) for circle in circles[0:3] ], lag_ratio = 1.0),
+        # LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles ], lag_ratio = 1.0),
+        nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00003),
         # nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(0.00007),
         # nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(150),
-        # photons[0].animate(rate_func = rush_from, run_time = cur_time).shift(1*RIGHT + 1*UP).scale(1.5),
-        # photons[1].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT -1*UP).scale(1.5),
-        # photons[2].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT + 1*UP).scale(1.5),
-        # photons[3].animate(rate_func = rush_from, run_time = cur_time).shift(1*RIGHT - 1*UP).scale(1.5),
-
-        # Rotate(photon_rot_group, PI, about_point = shift*RIGHT, run_time = cur_time, rate_func = linear)
+        photons[0].animate(rate_func = rush_from, run_time = cur_time).shift(2*RIGHT + 2*UP).scale(1.5),
+        photons[1].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT -2*UP).scale(1.5),
+        photons[2].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT + 2*UP).scale(1.5),
+        photons[3].animate(rate_func = rush_from, run_time = cur_time).shift(2*RIGHT - 2*UP).scale(1.5),
     )
 
     cur_time = beat_time
 
+    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(1) ]
+
     scene.play(
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .05*beat_time, rate_func = rush_from), FadeOut(circle, scale = 10, run_time = .45*beat_time, rate_func = rush_from)) for circle in circles[6:8] ], lag_ratio = 1.0),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 20, run_time = .9*beat_time, rate_func = rush_from)) for circle in circles[3:4] ], lag_ratio = 1.0),
         # Indicate(nucleus, color = YELLOW, scale_factor = 2, run_time = cur_time, rate_func = rush_from),
-        Succession(FadeIn(domain_fade_circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
-
-        # Rotate(photon_rot_group, 1.2*PI/3, about_point = shift*RIGHT, run_time = cur_time, rate_func = linear)
-    )
-
-    cur_time = 3*beat_time
-
-    circles = [ Circle(radius = 2, color = YELLOW, stroke_width = 26).move_to(shift*RIGHT) for _ in range(7) ]
-    domain_fade_circles = [ Circle(radius = black_domain_size, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(3) ]
-
-    scene.play(
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .05*beat_time, rate_func = rush_from), FadeOut(circle, scale = 20, run_time = .45*beat_time, rate_func = rush_from)) for circle in circles[0:6] ], lag_ratio = 1.0),
-        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles ], lag_ratio = 1.0),
-        # nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(0.00007),
-        # nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(150),
-        # photons[0].animate(rate_func = rush_from, run_time = cur_time).shift(1*RIGHT + 1*UP).scale(1.5),
-        # photons[1].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT -1*UP).scale(1.5),
-        # photons[2].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT + 1*UP).scale(1.5),
-        # photons[3].animate(rate_func = rush_from, run_time = cur_time).shift(1*RIGHT - 1*UP).scale(1.5),
-
-        # Rotate(photon_rot_group, 1.4*PI, about_point = shift*RIGHT, run_time = cur_time, rate_func = linear)
+        Succession(FadeIn(domain_fade_circles[0], run_time = .1*beat_time, rate_func = rush_from), FadeOut(domain_fade_circles[0], scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)),
     )
 
     cur_time = 2*beat_time
 
-    circles = [ Circle(radius = 2, color = YELLOW).move_to(photons[i][0]) for i in range(len(photons)) ]
+    circles = [ Circle(radius = 1.75, color = YELLOW, stroke_width = 50).move_to(shift*RIGHT) for _ in range(7) ]
+    domain_fade_circles = [ Circle(radius = black_domain_size/2, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(2) ]
+
+    scene.play(
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 20, run_time = .9*beat_time, rate_func = rush_from)) for circle in circles[0:2] ], lag_ratio = 1.0),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles[0:2] ], lag_ratio = 1.0),
+        black_domain.animate(run_time = beat_time, rate_func = rush_into).scale(1/2),
+        photons[0].animate(rate_func = rush_from, run_time = cur_time).shift(2*RIGHT + 2*UP).scale(1.5),
+        photons[1].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT -2*UP).scale(1.5),
+        photons[2].animate(rate_func = rush_from, run_time = cur_time).shift(-1*RIGHT + 2*UP).scale(1.5),
+        photons[3].animate(rate_func = rush_from, run_time = cur_time).shift(2*RIGHT - 2*UP).scale(1.5),
+        nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00003),
+    )
+
+    cur_time = 2*beat_time
+
+    circles = [ Circle(radius = 1, color = YELLOW, stroke_width = 45).move_to(photons[i][0]) for i in range(len(photons)) ]
     scales = [20,15,25,30]
+    domain_fade_circles = [ Circle(radius = black_domain_size/2, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(2) ]
 
     scene.play(
         LaggedStart(
@@ -1813,7 +1809,258 @@ def combine (scene: Scene):
                 for i in [0,2,1,3]
             ],
             lag_ratio = .25
-        )
+        ),
+        LaggedStart( *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles ], lag_ratio = 1.0),
     )
+
+    cur_time = 12*beat_time
+
+    def get_angle (pos):
+        return arctan2(pos[1], pos[0])
+
+    def get_dist (pos):
+        return sqrt(pos[0]**2 + pos[1]**2)
+
+    def get_point (dist, angle):
+        return dist*(cos(angle)*RIGHT + sin(angle)*UP)
+
+    photon_angle_tracker0 = ValueTracker(get_angle(photons[0].get_center() - shift*RIGHT))
+    photon_angle_tracker1 = ValueTracker(get_angle(photons[1].get_center() - shift*RIGHT))
+    photon_angle_tracker2 = ValueTracker(get_angle(photons[2].get_center() - shift*RIGHT))
+    photon_angle_tracker3 = ValueTracker(get_angle(photons[3].get_center() - shift*RIGHT))
+
+    photon_dist_tracker0 = ValueTracker(get_dist(photons[0].get_center() - shift*RIGHT))
+    photon_dist_tracker1 = ValueTracker(get_dist(photons[1].get_center() - shift*RIGHT))
+    photon_dist_tracker2 = ValueTracker(get_dist(photons[2].get_center() - shift*RIGHT))
+    photon_dist_tracker3 = ValueTracker(get_dist(photons[3].get_center() - shift*RIGHT))
+
+    photons[0].add_updater(lambda m: m.move_to(shift*RIGHT + get_point(photon_dist_tracker0.get_value(), photon_angle_tracker0.get_value())))
+    photons[1].add_updater(lambda m: m.move_to(shift*RIGHT + get_point(photon_dist_tracker1.get_value(), photon_angle_tracker1.get_value())))
+    photons[2].add_updater(lambda m: m.move_to(shift*RIGHT + get_point(photon_dist_tracker2.get_value(), photon_angle_tracker2.get_value())))
+    photons[3].add_updater(lambda m: m.move_to(shift*RIGHT + get_point(photon_dist_tracker3.get_value(), photon_angle_tracker3.get_value())))
+
+    domain_position1 = black_domain_pos + (-domain_cage_dist)*RIGHT
+    domain_position4 = black_domain_pos + (-domain_cage_dist)*dir(PI/4)
+    domain_position3 = black_domain_pos + (-domain_cage_dist)*dir(PI/4+PI)
+    domain_position2 = black_domain_pos + (-domain_cage_dist)*dir(PI/4+PI/2)
+    domain_position5 = black_domain_pos + (-domain_cage_dist)*dir(-PI/4)
+    domain_position9 = domain_position1
+    domain_position6 = domain_position5
+    domain_position8 = domain_position2
+    domain_position7 = domain_position4
+    domain_position10 = domain_position3
+    domain_position11 = domain_position6
+    domain_position12 = black_domain_pos
+
+    domain_fade_circles = [ Circle(radius = black_domain_size/2, color = RED, stroke_width = 20, z_index = 10).move_to(black_domain_pos) for _ in range(6) ]
+
+    scene.play(
+        photon_dist_tracker0.animate(run_time = cur_time, rate_func = rush_into).set_value(0),
+        photon_dist_tracker1.animate(run_time = cur_time, rate_func = rush_into).set_value(0),
+        photon_dist_tracker2.animate(run_time = cur_time, rate_func = rush_into).set_value(0),
+        photon_dist_tracker3.animate(run_time = cur_time, rate_func = rush_into).set_value(0),
+        photon_angle_tracker0.animate(run_time = cur_time, rate_func = rush_into).increment_value(3*PI),
+        photon_angle_tracker1.animate(run_time = cur_time, rate_func = rush_into).increment_value(3*PI),
+        photon_angle_tracker2.animate(run_time = cur_time, rate_func = rush_into).increment_value(3*PI),
+        photon_angle_tracker3.animate(run_time = cur_time, rate_func = rush_into).increment_value(3*PI),
+        nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(0.00008),
+        nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_into).increment_value(12),
+        Rotate(cage_inner_group, 3*PI, run_time = cur_time, rate_func = rush_into),
+        Rotate(cage_middle_group, -3*PI, run_time = cur_time, rate_func = rush_into),
+        Rotate(cage_outer_group, 3*PI-PI/4, run_time = cur_time, rate_func = rush_into),
+        LaggedStart(
+            MoveAlongPath(black_domain, Line(domain_position1, domain_position2), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position2, domain_position3), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position3, domain_position4), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position4, domain_position5), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position5, domain_position6), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position6, domain_position7), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position7, domain_position8), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position8, domain_position9), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position9, domain_position10), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position10, domain_position11), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position11, domain_position12), run_time = beat_time/4, rate_func = rush_from),
+            *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles[0:3] ],
+            MoveAlongPath(black_domain, Line(domain_position1, domain_position2), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position2, domain_position4), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position4, domain_position6), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position6, domain_position11), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position11, domain_position8), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position8, domain_position5), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position5, domain_position9), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position9, domain_position3), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position3, domain_position10), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position10, domain_position7), run_time = beat_time/4, rate_func = rush_from),
+            MoveAlongPath(black_domain, Line(domain_position7, domain_position12), run_time = beat_time/4, rate_func = rush_from),
+            *[ Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 0.05, run_time = .9*beat_time, rate_func = rush_from)) for circle in domain_fade_circles[3:6] ],
+            lag_ratio = 1.0
+        ),
+    )
+
+    cur_time = 4*beat_time
+
+    # nucleus.clear_updaters()
+
+    for photon in photons:
+        photon.clear_updaters()
+        photon.set_z_index(1.9)
+
+    scene.play(
+        scene.camera.frame.animate(run_time = cur_time, rate_func = linear).scale(0.2).shift(black_domain_pos), # pyright: ignore[reportAttributeAccessIssue]
+        nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(0.00007),
+        nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-6),
+        nucleus_shift_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-shift - black_domain_pos_num),
+        *[ photon.animate(run_time = cur_time, rate_func = rush_from).scale(0.5).shift((shift+black_domain_pos_num)*LEFT) for photon in photons ],
+        black_domain.animate(run_time = cur_time, rate_func = linear).scale(1.3),
+    )
+
+    # scene.play(
+    #     nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.0001),
+    #     nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(1),
+    #     scene.camera.frame.animate(run_time = cur_time, rate_func = rush_from).scale(6), # pyright: ignore[reportAttributeAccessIssue]
+    #     Flash(Dot(black_domain_pos), color = YELLOW, num_lines = 30, flash_radius = 1, line_length = cage_circle_size/sqrt(2) - 2),
+    #     # Flash(cage_circle_inner, color = YELLOW, num_lines = 30, flash_radius = cage_circle_size/sqrt(2) + 1, line_length = s*sqrt(2) - cage_circle_size/sqrt(2) - 2, rate_func = rush_from),
+    #     # Flash(cage_middle_circle1, color = YELLOW, num_lines = 30, flash_radius = s*sqrt(2) - cage_circle_size/sqrt(2) + 1, line_length = 0.8*(s-c), rate_func = rush_from),
+    #     # Flash(cage_inner_group, run_time = cur_time, rate_func = rush_from),
+    #     # Flash(cage_middle_group, run_time = cur_time, rate_func = rush_from),
+    #     # Flash(cage_outer_group, run_time = cur_time, rate_func = rush_from),
+    # )
+
+    light_count = 95
+
+    random.seed(10)
+
+    angle_randoms = random.random(light_count)
+    dist_randoms = random.random(light_count)
+    angles = [ interpolate(0, 2*PI, r) for r in angle_randoms ]
+    dists = [ interpolate(cage_circle_size*sqrt(2), 10*cage_circle_size, r) for r in dist_randoms ]
+
+    light_dispersion = 1.08
+    light_number = 100
+    light_radius = 3.5
+    light_opacity = 0.2
+    lights = [ create_glow(Dot(get_point(dists[i], angles[i]) + black_domain_pos), rad = light_radius, num = light_number, dispersion = light_dispersion, col = YELLOW_C, z_index = 100, opacity = light_opacity) for i in range(light_count) ]
+
+    scene.clear()
+    scene.add(cage_inner_group, cage_middle_group, cage_outer_group, nucleus, black_domain)
+
+    light_paths = [ TracedPath(light[0].get_center, dissipating_time = 0.3, stroke_width = 10, stroke_opacity = [1,1]).set_color(YELLOW_C) for light in lights ]
+    scene.add(*light_paths)
+
+    # group_scale_tracker = ValueTracker(1)
+    # group_rotate_tracker = ValueTracker(12*PI)
+    #
+    # def update_group (m):
+    #     m.restore()
+    #     m.scale(group_scale_tracker.get_value())
+    #     m.rotate(group_rotate_tracker.get_value())
+    #
+    # cage_inner_group.clear_updaters()
+    # cage_inner_group.save_state()
+    # cage_inner_group.add_updater(update_group)
+    # cage_middle_group.clear_updaters()
+    # cage_middle_group.save_state()
+    # cage_middle_group.add_updater(update_group)
+    # cage_outer_group.clear_updaters()
+    # cage_outer_group.save_state()
+    # cage_outer_group.add_updater(update_group)
+
+    cur_time = 32*beat_time
+
+    # def rush_into_p (f: float) -> float:
+    #     return rush_into(f, inflection = 6)
+
+    scene.play(
+        FadeOut(black_domain, scale = 2, run_time = beat_time, rate_func = rush_from),
+        Succession(
+            ApplyMethod(scene.camera.frame.scale, 8, run_time = beat_time, rate_func = rush_from),
+            ApplyMethod(scene.camera.frame.scale, 1.3, run_time = 15*beat_time, rate_func = linear),
+        ),
+        Succession(
+            ApplyMethod(nucleus_dispersion_scale_tracker.increment_value, -0.00009, run_time = beat_time, rate_func = rush_from),
+            Wait(15*beat_time),
+            ApplyMethod(nucleus_dispersion_scale_tracker.increment_value, -0.00003, run_time = 16*beat_time, rate_func = rush_into),
+            # AnimationGroup(
+            #     nucleus_dispersion_scale_tracker.animate(run_time = 16*beat_time, rate_func = rush_from).increment_value(-0.00002),
+            #     # nucleus_scale_tracker.animate(run_time = 16*beat_time, rate_func = rush_from).increment_value(1),
+            # ),
+        ),
+
+        # Flash(Dot(black_domain_pos), run_time = cur_time, rate_func = rush_from, color = YELLOW, num_lines = 30, flash_radius = 1, line_length = cage_circle_size/sqrt(2) - 2),
+        Rotate(cage_inner_group, 24*PI, run_time = cur_time, rate_func = rush_into),
+        Rotate(cage_middle_group, -24*PI, run_time = cur_time, rate_func = rush_into),
+        Rotate(cage_outer_group, 24*PI, run_time = cur_time, rate_func = rush_into),
+        LaggedStart(
+            *[ FadeIn(light, run_time = beat_time/3, rate_func = rush_from) for light in lights ],
+            *[ light.animate(run_time = beat_time/3, rate_func = rush_into).move_to(black_domain_pos).scale(0.1) for light in lights ],
+            lag_ratio = 0.5
+        ),
+    )
+
+    circle = Circle(radius = 2, color = YELLOW_C, stroke_width = 85).move_to(black_domain_pos)
+    cur_time = beat_time
+
+    scene.remove(*lights)
+    scene.remove(*light_paths)
+
+    scene.play(
+        FadeOut(cage_inner_group, scale = 2, run_time = cur_time, rate_func = rush_from),
+        FadeOut(cage_middle_group, scale = 2, run_time = cur_time, rate_func = rush_from),
+        FadeOut(cage_outer_group, scale = 2, run_time = cur_time, rate_func = rush_from),
+        Succession( FadeIn(circle, run_time = .1*beat_time, rate_func = rush_from), FadeOut(circle, scale = 20, run_time = .9*beat_time, rate_func = rush_from)),
+        nucleus.animate(run_time = cur_time, rate_func = rush_from).set_color(YELLOW_C),
+        nucleus_dispersion_scale_tracker.animate(run_time = beat_time, rate_func = rush_from).increment_value(0.0001),
+        nucleus_scale_tracker.animate(run_time = beat_time, rate_func = rush_from).increment_value(150),
+        # *[
+        #     # nucleus[i].animate(run_time = cur_time, rate_func = rush_from).set_color(ManimColor.from_rgb((255,255,255*(1-i/nucleus_number))))
+        #     nucleus[i].animate(run_time = cur_time, rate_func = rush_from).set_color(YELLOW_C)
+        #     for i in range(nucleus_number)
+        # ],
+    )
+
+    nucleus_path = TracedPath(nucleus[0].get_center, dissipating_time = 0.3, stroke_width = 60, stroke_opacity = [1,1]).set_color(YELLOW_C)
+    scene.add(nucleus_path)
+
+    nucleus_nimbs = [ Circle(radius = r, stroke_width = 40, z_index = 100) for r in [15,20,25] ]
+
+    cur_time = 2*beat_time
+
+    scene.play(
+        LaggedStart(
+            *[ Create(nimb, run_time = beat_time, rate_func = rush_from) for nimb in nucleus_nimbs ],
+            lag_ratio = 0.5,
+        ),
+    )
+
+    # cur_time = 16*beat_time
+    #
+    # scene.play(
+    #     # cage_inner_group.animate(run_time = cur_time, rate_func = linear).scale(2).set_color(YELLOW_C),
+    #     # cage_middle_group.animate(run_time = cur_time, rate_func = linear).scale(2).set_color(YELLOW_C),
+    #     # cage_outer_group.animate(run_time = cur_time, rate_func = linear).scale(2).set_color(YELLOW_C),
+    #     group_scale_tracker.animate(run_time = cur_time, rate_func = linear).set_value(2),
+    #     group_rotate_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(12*PI),
+    #     nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00001),
+    #     nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(1),
+    #     LaggedStart(
+    #         *[ light.animate(run_time = beat_time/3, rate_func = rush_into).move_to(black_domain_pos) for light in lights ],
+    #         lag_ratio = 0.5
+    #     ),
+    # )
+
+    # cur_time = beat_time
+    #
+    # scene.play(
+    #     # *[
+    #     #     FadeOut(obj, scale = 2, run_time = cur_time, rate_func = rush_from)
+    #     #     for obj in scene.mobjects
+    #     # ]
+    #     FadeOut(cage_inner_group, scale = 1.5, run_time = cur_time, rate_func = rush_from),
+    #     FadeOut(cage_middle_group, scale = 1.5, run_time = cur_time, rate_func = rush_from),
+    #     FadeOut(cage_outer_group, scale = 1.5, run_time = cur_time, rate_func = rush_from),
+    #     FadeOut(nucleus, scale = 2, run_time = cur_time, rate_func = rush_from),
+    #     *[ FadeOut(light, scale = 2, run_time = cur_time, rate_func = rush_from) for light in lights ],
+    #     *[ FadeOut(photon, scale = 2, run_time = cur_time, rate_func = rush_from) for photon in photons ],
+    # )
 
     scene.wait(5)

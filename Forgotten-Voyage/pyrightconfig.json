@@ -8,5 +8,6 @@
     "typeCheckingMode": "basic",
     "reportArgumentType": "warning",
     "reportCallIssue": "warning",
+    "reportAttributeAccessIssue": "warning",
     "reportWildcardImportFromLibrary": "none"
 }

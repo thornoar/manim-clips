@@ -1,4 +1,5 @@
 from manim import *
+from numpy import sqrt
 
 class Logo (Scene):
     def construct (self):
@@ -12,4 +13,13 @@ class Logo (Scene):
         group = Group(violin, writing)
         
         play(DrawBorderThenFill(violin), Write(writing), t = 2)
-        play(FadeOut(group))
+        # play(FadeOut(group))
+
+        number_of_squares = 3
+        s = 1.8
+        rotating_squares = [ Square(z_index = -1, color = "#0289FE").scale(s/(sqrt(2)**i)).rotate(i*PI/4) for i in range(number_of_squares) ]
+
+        play(
+            FadeOut(group, scale = 0.8, shift = DOWN),
+            FadeIn(VGroup(*rotating_squares), scale = 0.8, shift = DOWN),
+        )
