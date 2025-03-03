@@ -770,3 +770,34 @@ def current (scene: Scene):
     )
 
     scene.wait(3)
+
+    # cur_time = 16*beat_time
+    #
+    # scene.play(
+    #     # cage_inner_group.animate(run_time = cur_time, rate_func = linear).scale(2).set_color(YELLOW_C),
+    #     # cage_middle_group.animate(run_time = cur_time, rate_func = linear).scale(2).set_color(YELLOW_C),
+    #     # cage_outer_group.animate(run_time = cur_time, rate_func = linear).scale(2).set_color(YELLOW_C),
+    #     group_scale_tracker.animate(run_time = cur_time, rate_func = linear).set_value(2),
+    #     group_rotate_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(12*PI),
+    #     nucleus_dispersion_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(-0.00001),
+    #     nucleus_scale_tracker.animate(run_time = cur_time, rate_func = rush_from).increment_value(1),
+    #     LaggedStart(
+    #         *[ light.animate(run_time = beat_time/3, rate_func = rush_into).move_to(black_domain_pos) for light in lights ],
+    #         lag_ratio = 0.5
+    #     ),
+    # )
+
+    # cur_time = beat_time
+    #
+    # scene.play(
+    #     # *[
+    #     #     FadeOut(obj, scale = 2, run_time = cur_time, rate_func = rush_from)
+    #     #     for obj in scene.mobjects
+    #     # ]
+    #     FadeOut(cage_inner_group, scale = 1.5, run_time = cur_time, rate_func = rush_from),
+    #     FadeOut(cage_middle_group, scale = 1.5, run_time = cur_time, rate_func = rush_from),
+    #     FadeOut(cage_outer_group, scale = 1.5, run_time = cur_time, rate_func = rush_from),
+    #     FadeOut(nucleus, scale = 2, run_time = cur_time, rate_func = rush_from),
+    #     *[ FadeOut(light, scale = 2, run_time = cur_time, rate_func = rush_from) for light in lights ],
+    #     *[ FadeOut(photon, scale = 2, run_time = cur_time, rate_func = rush_from) for photon in photons ],
+    # )
